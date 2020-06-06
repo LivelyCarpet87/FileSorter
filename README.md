@@ -1,10 +1,16 @@
+# Basics
+
+This section targets people who have a more limited understanding of the command line. All commands, `in this format`, are presumed to be run in terminal. Terminal can be found on MacOS by typing "terminal" in Spotlight. 
+
+A **directory** is a location or a folder. It has a path, which is the list of folders leading to the last folder.
+
 # Function/Purpose
 
-This is a file sorter written in python3. It sorts all the files in a given root directory according rules in a configuration file and some Ignored.config files. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
+This is a file sorter written in python3. It sorts all the files in a given directory according rules listed by the user. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
 
 # OS Compatibility
 
-It has been tested on MacOS Mojave and should be compatible with all MacOS. It has not been tested on other OS but I presume it may work. Please open an Issue to let me know if it works or doesn't work on other OS. 
+It has been tested on MacOS Mojave and should be compatible with all MacOS. It has not been tested on other OS but I presume it may work. Please open an issue on GitHub to let me know if it works or doesn't work on other OS. 
 
 # Install
 
@@ -14,7 +20,7 @@ Git: [Download git here](https://git-scm.com/)
 
 Python3: To install python3 on MacOS using Homebrew, run `brew install python3`
 
-(To get Homebrew, paste `/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)&quot;` into terminal and hit enter. The script will guide you through the steps)
+(To get Homebrew, paste `/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)&quot;` into terminal and hit enter. The program will guide you through the steps)
 
 ## Steps of Installation
 
@@ -32,7 +38,7 @@ To install the required packages, run `pip3 install -r requirements.txt`
 
 1. `python3 initFileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
    
-   This generates the config files for you. If the --rootDir is not given, the script will assume the working directory of the terminal session to be the rootDir. If --genBinIgnored is included, it will generate a folder-specific Ignored.config file for each folder.
+   This generates the config files for you. If the --rootDir is not given, the program will assume the working directory of the terminal session to be the rootDir. If --genBinIgnored is included, it will generate a folder-specific Ignored.config file for each folder.
    
    **Quick Tip: Drag the rootDir folder into your terminal window to avoid typing it.**
 
@@ -54,37 +60,39 @@ Run `python3 FileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
 
 ## Example Config File
 
+The following is an example of an auto-generated file, the bolded parts can be edited by the user. 
+
 > [GlobalSettings]
 > 
 > \# root directory of bins to be sorted
 > 
-> rootdir = /Users/livelycarpet87/Google Drive/2020-2021 Semester 1
+> rootdir = **/Users/livelycarpet87/Google Drive/2020-2021 Semester 1**
 > 
 > \# enable filesort? (global)
 > 
-> rootstatus = OFF
+> rootstatus = **OFF**
 > 
 > \# name for directory of misplaced files
 > 
-> misplaceddirname = Misplaced
+> misplaceddirname = **Misplaced**
 > 
 > \# remove misplaced directory when it is empty?
 > 
-> removemisplaceddir = ON
+> removemisplaceddir = **ON**
 > 
-> [Bin1]
+> **[Bin1]**
 > 
 > \# user-given name for this bin
 > 
-> name = Misc
+> name = **Misc**
 > 
 > \# enable this bin?
 > 
-> active = ON
+> active = **ON**
 > 
 > \# name of folder for this bin
 > 
-> dirname = Misc
+> dirname = **Misc**
 > 
 > \# tag for files in this bin.
 > 
@@ -92,71 +100,95 @@ Run `python3 FileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
 > 
 > \# filename must contain tag_ in its name to be put into bin
 > 
-> tag = MISC
+> tag = **MISC**
 > 
 > \# alternative tag for files in this bin.
 > 
-> tagalternative = Misc
+> tagalternative = **Misc**
 > 
 > \# ignore misplaced files belonging to this bin in this bin or misplaved folder?
 > 
-> ignoremisplaced = OFF
+> ignoremisplaced = **OFF**
 
 ## Explanation
 
-### [Global Settings]
+> **[GlobalSettings]**
 
 This section contains all the settings used for each bin and the program overall. 
 
-### rootdir
+> \# root directory of bins to be sorted
+> 
+> rootdir = **/Users/livelycarpet87/Google Drive/2020-2021 Semester 1**
 
-RootDir is the folder where all the folders (referred to as bins from now on for simplicity) are. The bins should all be sub-directories to this root directory. 
+RootDir is the folder where all the folders (referred to as bins for simplicity) to sort are. The bins should all be sub-directories to the rootDir path. 
 
-### rootstatus
+> \# enable filesort? (global)
+> 
+> rootstatus = **OFF**
 
-RootStatus is the Boolean value that enables the script. It defaults to false to prevent the user from executing without checking the config. If it is false, the script exits without making changes. 
+RootStatus is the ON/OFF value that enables the program. It defaults to OFF to prevent the user from executing without checking the config. If it is OFF, the program exits without making changes. 
 
-### misplaceddirname
+> \# name for directory of misplaced files
+> 
+> misplaceddirname = **Misplaced**
 
 MisplacedDirName is the name for the folder where all the files that don't belong in each bin are moved to. Files belonging to bins will be placed back to their respective bins from this folder. This folder is removed once it is empty by default. 
 
-### removemisplaceddir
+> \# remove misplaced directory when it is empty?
+> 
+> removemisplaceddir = **ON**
 
 RemoveMisplacedDir removes the folder for misplaced files when it is empty. It is on by default. 
 
 ---
 
-### [Bin1]
+> **[Bin1]**
 
 This section contains settings specific to Bin1. Bins must be named in sequential numerical order for the program to parse properly. 
 
-### name
+> \# user-given name for this bin
+> 
+> name = **Misc**
 
 This is a value for the user to set to recognize this bin, since the format Bin# is easier to parse but harder to remember which. It defaults to name of the folder when generated. 
 
-### active
+> \# enable this bin?
+> 
+> active = **ON**
 
 If this is false, any processing for this bin is skipped. This defaults to True. 
 
-### dirname
+> \# name of folder for this bin
+> 
+> dirname = **Misc**
 
 DirName is the name the bin. Its value defaults to the name of the folder. 
 
-### tag
+> \# tag for files in this bin.
+> 
+> \# file called randchar_misc_randchar.randtype will be put into misc bin.
+> 
+> \# filename must contain tag_ in its name to be put into bin
+> 
+> tag = **MISC**
 
 Tag is the tag for the bin. All file belonging to this bin have `TAG_`  (or the alternative tag) in their name, such as containing `MISC_` in the filename for the Misc folder. It defaults to the uppercase first 4 letters of the name of the bin. 
 
-### tagalternative
+> \# alternative tag for files in this bin.
+> 
+> tagalternative = **Misc**
 
 TagAlternative is the alternative tag for the bin. All file belonging to this bin have `ALTTAG_` (or the primary tag, see above) in their name, such as containing `Misc_` in the filename for the Misc folder. It defaults to the first 4 letters of the name of the bin and is not uppercased automatically. This attribute can be deleted without effects. 
 
-### ignoremisplaced
+> \# ignore misplaced files belonging to this bin in this bin or misplaved folder?
+> 
+> ignoremisplaced = **OFF**
 
 IgnoreMisplaced will cause misplaced files to be mentioned but not moved when enabled. It is OFF by default.  
 
 ---
 
-### [Bin2]
+> **[Bin2]**
 
 This is the beginning of the next bin. The number must be +1 of the previous bin. 
 
