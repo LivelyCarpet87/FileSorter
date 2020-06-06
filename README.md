@@ -1,6 +1,6 @@
 # Function/Purpose
 
-This is a file sorter written in python3. It sorts all the files in a given root directory according to a configuration file and some Ignored.config files. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
+This is a file sorter written in python3. It sorts all the files in a given root directory according rules in a configuration file and some Ignored.config files. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
 
 # OS Compatibility
 
@@ -20,9 +20,9 @@ Python3: To install python3 on MacOS using Homebrew, run `brew install python3`
 
 To install the required packages, run `pip3 install -r requirements.txt`
 
-1. `git clone FileSort`
+1. `git clone https://github.com/LivelyCarpet87/FileSorter`
 
-2. `cd FileSort`
+2. `cd FileSorter`
 
 3. `pip3 install -r requirements.txt`
 
@@ -32,9 +32,9 @@ To install the required packages, run `pip3 install -r requirements.txt`
 
 1. `python3 initFileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
    
-   Quick Tip: Drag the rootDir folder into your terminal window to avoid typing it. 
+   This generates the config files for you. If the --rootDir is not given, the script will assume the working directory of the terminal session to be the rootDir. If --genBinIgnored is included, it will generate a folder-specific Ignored.config file for each folder.
    
-   If the --rootDir is not given, the script will assume the working directory of the terminal session to be the rootDir
+   **Quick Tip: Drag the rootDir folder into your terminal window to avoid typing it.**
 
 2. Edit the generated configuration files in the /fileSortConfiguration folder in your /Path/To/Root/Of/Folders/To/Sort`
    
@@ -44,11 +44,11 @@ To install the required packages, run `pip3 install -r requirements.txt`
 
 Run `python3 FileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
 
-1. Files without the tag required for a folder and not ignored by any of the Ignored.config files will be moved into the Misplaced folder (you can rename this in the Config). If the Misplaced does not exist, it will be created. 
+1. Files without the tag required for a folder and not ignored by any of the Ignored.config files will be moved into the Misplaced folder (you can rename this in the Config). If the Misplaced folder does not exist, it will be created. 
 
 2. Files in the Misplaced folder with the right tag and not ignored by any of the Ignored.config files will be moved into the right folder. 
 
-3. If the Misplaced folder is empty, it will be removed. 
+3. If the Misplaced folder is empty, it will be removed by default. 
 
 # Config File Explained
 
@@ -170,4 +170,6 @@ The globalIgnored.config file is applied globally. The nameIgnored.config file i
 
 In the file is a set of strings separated by newlines. Each line is a string. If any file's name or absolute path contains this string, it will be ignored. It is not needed to add files beginning with '.' because they are ignored by default. Needless to say, any string contained in the rootDir would cause all the files to match and be ignored. 
 
+# Issues?
 
+If some function does not work as expected, or if you have any questions, feel free to open an issue. 
