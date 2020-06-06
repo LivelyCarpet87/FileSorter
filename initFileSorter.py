@@ -20,8 +20,8 @@ config['GlobalSettings'] = {'# Root Directory of bins to be sorted': None,
                             '# Enable fileSort? (Global)': None,
                             'rootStatus': 'OFF',
                             '# Name for directory of misplaced files': None,
-                            'misplacedDirName': 'Misplaced'
-                            '# Remove Misplaced direcotry when it is empty?': None,
+                            'misplacedDirName': 'Misplaced',
+                            '# Remove Misplaced directory when it is empty?': None,
                             'removeMisplacedDir': 'OFF'}
 
 binCount=1

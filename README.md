@@ -106,7 +106,7 @@ The following is an example of an auto-generated file, the bolded parts can be e
 > 
 > tagalternative = **Misc**
 > 
-> \# ignore misplaced files belonging to this bin in this bin or misplaved folder?
+> \# ignore misplaced files belonging to this bin in this bin or misplaced folder?
 > 
 > ignoremisplaced = **OFF**
 

@@ -4,10 +4,11 @@ import re
 import configparser
 import argparse
 
-def validTarget(name,subdir,filename):
+def validTarget(rootDir,name,subdir,filename):
     if filename[0]==".":
         return False
-    with open("globalIgnored.config", "r") as a_file:
+
+    with open(rootDir+"/fileSortConfiguration/globalIgnored.config", "r") as a_file:
         for line in a_file:
             ignored = line.strip()
             if ignored in subdir:
@@ -24,9 +25,6 @@ def validTarget(name,subdir,filename):
 
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
-    if not config.getboolean(bin, 'active'):
-        print(name+" skipped.")
-        return None
     dirName=thisBin.get('dirName',bin)
     tag=thisBin.get('tag',bin)
     if config.has_option(bin,'tagAlternative'):
@@ -35,14 +33,13 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
         tagAlternative=""
     ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
     misplacedDirName=thisBin.get('misplacedDirName',"Misplaced")
-    regexForTag= ".*"+tag+"_"+r"[\S\s]*"
-    regexForTagAlt= ".*"+tagAlternative+"_"+r"[\S\s]*"
+    regexForTag= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
+    regexForTagAlt= r"[\S\s]*"+tagAlternative+"_"+ r"[\S\s]*"
     regexTag = re.compile(r'('+regexForTag+')$', re.I)
     if tagAlternative!="":
         regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
     else:
-        regexTagAl t= regexTag
-
+        regexTagAlt= regexTag
     walkDir=rootDir+"/"+dirName
     if not os.path.isdir(rootDir+"/"+misplacedDirName):
         os.mkdir(rootDir+"/"+misplacedDirName)
@@ -50,7 +47,7 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
                 filepath = subdir + os.sep + filename
-                if validTarget(name,subdir,filename):
+                if validTarget(rootDir,name,subdir,filename):
                     if regexTag.search(filename) or regexTagAlt.search(filename):
                         continue
                     else:
@@ -61,13 +58,12 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
                             os.rename(filepath, rootDir+"/"+misplacedDirName+"/"+filename)
 
 def returnMisplaced(rootDir,misplacedDirName,thisBin):
+    config.read(path+'/fileSortConfiguration/fileSort.config')
     name=thisBin.get('name',bin)
-    if not config.getboolean(thisBin, 'active'):
-        print(name+" skipped.")
-        return None
     dirName=thisBin.get('dirName',bin)
+    ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
     tag=thisBin.get('tag',thisBin)
-    if config.has_option(thisBin,'tagAlternative'):
+    if config.has_option(bin,'tagAlternative'):
         tagAlternative=thisBin.get('tagAlternative')
     else:
         tagAlternative=""
@@ -77,20 +73,21 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
     if tagAlternative!="":
         regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
     else:
-        regexTagAl t= regexTag
+        regexTagAlt= regexTag
 
     walkDir=rootDir+"/"+misplacedDirName
     if os.path.isdir(walkDir):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
                 filepath = subdir + os.sep + filename
-                if validTarget(name,subdir,filename):
+                if validTarget(rootDir,name,subdir,filename):
                     if regexTag.search(filename) or regexTagAlt.search(filename):
                         if ignoreMisplaced:
-                            print(filepath+" sgould be returned")
+                            print(filepath+" should be returned")
                         else:
                             print(filepath+" returned")
                             os.rename(filepath, rootDir+"/"+dirName+"/"+filename)
+
 
 #Read Config
 config = configparser.ConfigParser()
@@ -129,14 +126,30 @@ for i in range(1,binCount+1):
     bin="Bin"+str(i)
     if config.has_section(bin):
         thisBin=config[bin]
-        removeMisplaced(rootDir,misplacedDirName,thisBin)
+        active=config.getboolean(bin, 'active')
+        if active:
+            removeMisplaced(rootDir,misplacedDirName,thisBin)
+        else:
+            print(thisBin.get('name',bin)+" skipped.")
 
 for i in range(1,binCount+1):
     bin="Bin"+str(i)
     if config.has_section(bin):
         thisBin=config[bin]
-        returnMisplaced(rootDir,misplacedDirName,thisBin)
+        active=config.getboolean(bin, 'active')
+        if active:
+            returnMisplaced(rootDir,misplacedDirName,thisBin)
+        else:
+            print(thisBin.get('name',bin)+" skipped.")
 
-if (not os.listdir(rootDir+"/"+misplacedDirName)) and removeMisplacedDir:
+
+misplacedFiles=os.listdir(rootDir+"/"+misplacedDirName)
+if os.path.exists(rootDir+"/"+misplacedDirName+"/.DS_Store"):
+    misplacedFiles.remove('.DS_Store')
+if (not misplacedFiles) and removeMisplacedDir:
     print("Removed " + misplacedDirName + " because uneeded")
+    if os.path.exists(rootDir+"/"+misplacedDirName+"/.DS_Store"):
+        os.remove(rootDir+"/"+misplacedDirName+"/.DS_Store")
     os.rmdir(rootDir+"/"+misplacedDirName)
+else:
+    print("Keeping "+misplacedDirName+" in accordance to user settings")
