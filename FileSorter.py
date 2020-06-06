@@ -24,7 +24,9 @@ def validTarget(name,subdir,filename):
 
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
-    active=config.getboolean(bin, 'active')
+    if not config.getboolean(bin, 'active'):
+        print(name+" skipped.")
+        return None
     dirName=thisBin.get('dirName',bin)
     tag=thisBin.get('tag',bin)
     if config.has_option(bin,'tagAlternative'):
@@ -36,7 +38,10 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
     regexForTag= ".*"+tag+"_"+r"[\S\s]*"
     regexForTagAlt= ".*"+tagAlternative+"_"+r"[\S\s]*"
     regexTag = re.compile(r'('+regexForTag+')$', re.I)
-    regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
+    if tagAlternative!="":
+        regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
+    else:
+        regexTagAl t= regexTag
 
     walkDir=rootDir+"/"+dirName
     if not os.path.isdir(rootDir+"/"+misplacedDirName):
@@ -50,24 +55,29 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
                         continue
                     else:
                         if ignoreMisplaced:
-                            print(filepath+" misplaced")
+                            print(filepath+" is misplaced")
                         else:
-                            print(filepath+" misplaced")
+                            print(filepath+" is misplaced and placed into "+misplacedDirName)
                             os.rename(filepath, rootDir+"/"+misplacedDirName+"/"+filename)
 
 def returnMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
-    active=config.getboolean(bin, 'active')
+    if not config.getboolean(thisBin, 'active'):
+        print(name+" skipped.")
+        return None
     dirName=thisBin.get('dirName',bin)
-    tag=thisBin.get('tag',bin)
-    if config.has_option(bin,'tagAlternative'):
+    tag=thisBin.get('tag',thisBin)
+    if config.has_option(thisBin,'tagAlternative'):
         tagAlternative=thisBin.get('tagAlternative')
     else:
         tagAlternative=""
     regexForTag= ".*"+tag+"_"+r"[\S\s]*"
     regexForTagAlt= ".*"+tagAlternative+"_"+r"[\S\s]*"
     regexTag = re.compile(r'('+regexForTag+')$', re.I)
-    regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
+    if tagAlternative!="":
+        regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
+    else:
+        regexTagAl t= regexTag
 
     walkDir=rootDir+"/"+misplacedDirName
     if os.path.isdir(walkDir):
@@ -77,7 +87,7 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
                 if validTarget(name,subdir,filename):
                     if regexTag.search(filename) or regexTagAlt.search(filename):
                         if ignoreMisplaced:
-                            print(filepath+" returned")
+                            print(filepath+" sgould be returned")
                         else:
                             print(filepath+" returned")
                             os.rename(filepath, rootDir+"/"+dirName+"/"+filename)
@@ -102,6 +112,8 @@ if ('GlobalSettings' in config):
     misplacedDirName=GlobalSettings.get('misplacedDirName',"Misplaced")
     rootDir=GlobalSettings.get('rootDir')
     rootStatus=config.getboolean('GlobalSettings','rootStatus')
+    removeMisplacedDir=config.getboolean('GlobalSettings','removeMisplacedDir')
+
     if not rootStatus:
         sys.exit("fileSort.py disabled in configfile")
 
@@ -125,6 +137,6 @@ for i in range(1,binCount+1):
         thisBin=config[bin]
         returnMisplaced(rootDir,misplacedDirName,thisBin)
 
-if not os.listdir(rootDir+"/"+misplacedDirName):
+if (not os.listdir(rootDir+"/"+misplacedDirName)) and removeMisplacedDir:
     print("Removed " + misplacedDirName + " because uneeded")
     os.rmdir(rootDir+"/"+misplacedDirName)

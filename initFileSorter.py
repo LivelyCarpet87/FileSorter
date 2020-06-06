@@ -15,12 +15,14 @@ if not os.path.isdir(path+"/fileSortConfiguration"):
 f = open("./fileSortConfiguration/globalIgnored.config", "w")
 
 config = configparser.ConfigParser(allow_no_value=True)
-config['GlobalSettings'] = {'# Roo Directory of bins to be sorted': None,
+config['GlobalSettings'] = {'# Root Directory of bins to be sorted': None,
                             'rootDir': path,
                             '# Enable fileSort? (Global)': None,
                             'rootStatus': 'OFF',
                             '# Name for directory of misplaced files': None,
-                            'misplacedDirName': 'Misplaced'}
+                            'misplacedDirName': 'Misplaced'
+                            '# Remove Misplaced direcotry when it is empty?': None,
+                            'removeMisplacedDir': 'OFF'}
 
 binCount=1
 for name in os.listdir(path):
