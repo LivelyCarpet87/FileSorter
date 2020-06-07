@@ -144,10 +144,20 @@ The following is an example of an auto-generated file, the bolded parts can be e
 
 ## About the Ignored.config Files
 
-The globalIgnored.config file is applied globally. The nameIgnored.config file is applied to the specific bin with the corresponding name. For example, globalIgnored.config applies to the Misc and the Robotics bins, but MiscIgnored.config only applies to the Misc bin. 
+The globalIgnored.config file is applied globally. The nameIgnored.config file is applied to the specific bin with the corresponding name. For example, globalIgnored.config applies to the Misc and the Robotics bins, but MiscIgnored.config only applies to the bin named Misc. 
 
 In the file is a set of strings separated by newlines. Each line is a string. If any file's name or absolute path contains this string, it will be ignored. It is not needed to add files beginning with '.' because they are ignored by default. Needless to say, any string contained in the rootDir would cause all the files to match and be ignored. 
 
 # Issues?
 
 If some function does not work as expected, or if you have any questions, feel free to open an issue. 
+
+# To-Do
+
+- [ ] Add a interactive config setup script or a GUI application
+
+- [ ] Add a script to automatically rename files
+
+- [ ] Wrap into an application for automation. 
+
+
