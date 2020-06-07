@@ -67,13 +67,17 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
         tagAlternative=thisBin.get('tagAlternative')
     else:
         tagAlternative=""
-    regexForTag= ".*"+tag+"_"+r"[\S\s]*"
-    regexForTagAlt= ".*"+tagAlternative+"_"+r"[\S\s]*"
+    regexForTag_F= ".*"+tag+"_"+r"[\S\s]*"
+    regexForTag_B= ".*"+"_"+tag+r"[\S\s]*"
+    regexForTagAlt_F= ".*"+tagAlternative+"_"+r"[\S\s]*"
+    regexForTagAlt_B= ".*"+"_"+tagAlternative+r"[\S\s]*"
     regexTag = re.compile(r'('+regexForTag+')$', re.I)
     if tagAlternative!="":
-        regexTagAlt = re.compile(r'\.('+tagAlternative+')$', re.I)
+        regexTagAlt_F = re.compile(r'\.('+tagAlternative_F+')$', re.I)
+        regexTagAlt_B = re.compile(r'\.('+tagAlternative_B+')$', re.I)
     else:
-        regexTagAlt= regexTag
+        regexTagAlt_F= regexTag_F
+        regexTagAlt_B= regexTag_B
 
     walkDir=rootDir+"/"+misplacedDirName
     if os.path.isdir(walkDir):
@@ -81,7 +85,7 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
             for filename in files:
                 filepath = subdir + os.sep + filename
                 if validTarget(rootDir,name,subdir,filename):
-                    if regexTag.search(filename) or regexTagAlt.search(filename):
+                    if (regexTag_F.search(filename) or regexTag_B.search(filename)) or (regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)):
                         if ignoreMisplaced:
                             print(filepath+" should be returned")
                         else:
