@@ -22,7 +22,11 @@ config['GlobalSettings'] = {'# Root Directory of bins to be sorted': None,
                             '# Name for directory of misplaced files': None,
                             'misplacedDirName': 'Misplaced',
                             '# Remove Misplaced directory when it is empty?': None,
-                            'removeMisplacedDir': 'OFF'}
+                            'removeMisplacedDir': 'OFF',
+                            '# Group versions?': None,
+                            'groupversions' : ON,
+                            '# Any file with this number of versions or more will be grouped.': None,
+                            'groupthreshold': 3}
 
 binCount=1
 for name in os.listdir(path):

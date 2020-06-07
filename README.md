@@ -115,20 +115,32 @@ The following is an example of an auto-generated file, the bolded parts can be e
 > \# ignore misplaced files belonging to this bin in this bin or misplaced folder?
 > 
 > ignoremisplaced = **OFF**
+> 
+> \# Group versions?
+> 
+> groupversions = **ON**
+> 
+> \# Any file with this number of versions or more will be grouped.
+> 
+> groupthreshold = **3**
 
 ### Things User May Want To Change
 
 1. rootsort: Set to ON to enable the sorting
 
-2. active: This sets whether the bin has files sorted in/out. Once off, the bin is skipped. 
+2. groupVersions: The file-sorter will combine the files with different version numbers in the same bin together. For example, `ROB_myCodeV1.0.java`, `ROB_myCodev1.2.java`, and  `ROB_myCodeV2.0.java`  will be all grouped to a folder called `myCode` in the same directory when this is enabled. 
 
-3. name: The names for each file bin can be changed to be different from the folder's name. 
+3. groupthreshold: This is the minimal number of versions that need to exist before the files are grouped together. 
 
-4. tag: The user can edit the tag if they feel like it. It can be more or less than 4 characters. Just remember to name the files as `TAG_Filename.filetype`
+4. active: This sets whether the bin has files sorted in/out. Once off, the bin is skipped. 
 
-5. tagalternative: It is just like tag. Delete it if you do not want it. 
+5. name: The names for each file bin can be changed to be different from the folder's name. 
 
-6. ignoremisplaced: Set this to on for a dry run. 
+6. tag: The user can edit the tag if they feel like it. It can be more or less than 4 characters. Just remember to name the files as `TAG_Filename.filetype`
+
+7. tagalternative: It is just like tag. Delete it if you do not want it. 
+
+8. ignoremisplaced: Set this to on for a dry run. 
 
 ## About the Ignored.config Files
 
