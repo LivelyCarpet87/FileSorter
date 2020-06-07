@@ -36,11 +36,11 @@ To install the required packages, run `pip3 install -r requirements.txt`
 
 ## Set Up
 
-1. `python3 initFileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
+1. `python3 initFileSorter.py --rootDir /Absolute/Path/To/Root/Of/Folders/To/Sort`
    
    This generates the config files for you. If the --rootDir is not given, the program will assume the working directory of the terminal session to be the rootDir. If --genBinIgnored is included, it will generate a folder-specific Ignored.config file for each folder.
    
-   **Quick Tip: Drag the rootDir folder into your terminal window to avoid typing it.**
+   **Quick Tip: Drag the folder into your terminal window instead of typing it.**
 
 2. Edit the generated configuration files in the /fileSortConfiguration folder in your /Path/To/Root/Of/Folders/To/Sort`
    
@@ -48,7 +48,7 @@ To install the required packages, run `pip3 install -r requirements.txt`
 
 ## Execution
 
-Run `python3 FileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
+Run `python3 FileSorter.py --rootDir /Absolute/Path/To/Root/Of/Folders/To/Sort`
 
 1. Files without the tag required for a folder and not ignored by any of the Ignored.config files will be moved into the Misplaced folder (you can rename this in the Config). If the Misplaced folder does not exist, it will be created. 
 
@@ -56,9 +56,7 @@ Run `python3 FileSorter.py --rootDir /Path/To/Root/Of/Folders/To/Sort`
 
 3. If the Misplaced folder is empty, it will be removed by default. 
 
-# Config File Explained
-
-## Example Config File
+# Config File
 
 The following is an example of an auto-generated file, the bolded parts can be edited by the user. 
 
@@ -96,13 +94,13 @@ The following is an example of an auto-generated file, the bolded parts can be e
 > 
 > \# tag for files in this bin.
 > 
-> \# file called randchar_misc_randchar.randtype will be put into misc bin.
+> \# file called MISC\_filename.filetype will be put into misc bin.
 > 
 > \# filename must contain tag_ in its name to be put into bin
 > 
 > tag = **MISC**
 > 
-> \# alternative tag for files in this bin.
+> \# alternative tag for files in this bin. 
 > 
 > tagalternative = **Misc**
 > 
@@ -110,89 +108,19 @@ The following is an example of an auto-generated file, the bolded parts can be e
 > 
 > ignoremisplaced = **OFF**
 
-## Explanation
+### Things User May Want To Change
 
-> **[GlobalSettings]**
+1. rootsort: Set to ON to enable the sorting
 
-This section contains all the settings used for each bin and the program overall. 
+2. active: This sets whether the bin has files sorted in/out. Once off, the bin is skipped. 
 
-> \# root directory of bins to be sorted
-> 
-> rootdir = **/Users/livelycarpet87/Google Drive/2020-2021 Semester 1**
+3. name: The names for each file bin can be changed to be different from the folder's name. 
 
-RootDir is the folder where all the folders (referred to as bins for simplicity) to sort are. The bins should all be sub-directories to the rootDir path. 
+4. tag: The user can edit the tag if they feel like it. It can be more or less than 4 characters. Just remember to name the files as `TAG_Filename.filetype`
 
-> \# enable filesort? (global)
-> 
-> rootstatus = **OFF**
+5. tagalternative: It is just like tag. Delete it if you do not want it. 
 
-RootStatus is the ON/OFF value that enables the program. It defaults to OFF to prevent the user from executing without checking the config. If it is OFF, the program exits without making changes. 
-
-> \# name for directory of misplaced files
-> 
-> misplaceddirname = **Misplaced**
-
-MisplacedDirName is the name for the folder where all the files that don't belong in each bin are moved to. Files belonging to bins will be placed back to their respective bins from this folder. This folder is removed once it is empty by default. 
-
-> \# remove misplaced directory when it is empty?
-> 
-> removemisplaceddir = **ON**
-
-RemoveMisplacedDir removes the folder for misplaced files when it is empty. It is on by default. 
-
----
-
-> **[Bin1]**
-
-This section contains settings specific to Bin1. Bins must be named in sequential numerical order for the program to parse properly. 
-
-> \# user-given name for this bin
-> 
-> name = **Misc**
-
-This is a value for the user to set to recognize this bin, since the format Bin# is easier to parse but harder to remember which. It defaults to name of the folder when generated. 
-
-> \# enable this bin?
-> 
-> active = **ON**
-
-If this is false, any processing for this bin is skipped. This defaults to True. 
-
-> \# name of folder for this bin
-> 
-> dirname = **Misc**
-
-DirName is the name the bin. Its value defaults to the name of the folder. 
-
-> \# tag for files in this bin.
-> 
-> \# file called randchar_misc_randchar.randtype will be put into misc bin.
-> 
-> \# filename must contain tag_ in its name to be put into bin
-> 
-> tag = **MISC**
-
-Tag is the tag for the bin. All file belonging to this bin have `TAG_`  (or the alternative tag) in their name, such as containing `MISC_` in the filename for the Misc folder. It defaults to the uppercase first 4 letters of the name of the bin. 
-
-> \# alternative tag for files in this bin.
-> 
-> tagalternative = **Misc**
-
-TagAlternative is the alternative tag for the bin. All file belonging to this bin have `ALTTAG_` (or the primary tag, see above) in their name, such as containing `Misc_` in the filename for the Misc folder. It defaults to the first 4 letters of the name of the bin and is not uppercased automatically. This attribute can be deleted without effects. 
-
-> \# ignore misplaced files belonging to this bin in this bin or misplaved folder?
-> 
-> ignoremisplaced = **OFF**
-
-IgnoreMisplaced will cause misplaced files to be mentioned but not moved when enabled. It is OFF by default.  
-
----
-
-> **[Bin2]**
-
-This is the beginning of the next bin. The number must be +1 of the previous bin. 
-
----
+6. ignoremisplaced: Set this to on for a dry run. 
 
 ## About the Ignored.config Files
 
