@@ -6,7 +6,7 @@ A **directory** is a location or a folder. It has a path, which is the list of f
 
 # Function/Purpose
 
-This is a file sorter written in python3. It sorts all the files in a given directory according rules listed by the user. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
+This is a file sorter written in python3. It sorts all the files in a given directory according to rules listed by the user. It sorts files into folders according to a tag written into file names. For example, if `ROB` has been defined as the tag for the `Robotics` folder, files with names containing `ROB_` such as `ROB_pushbot.java` will be sorted into the `Robotics` folder. It also has the ability to ignore files according to certain strings in filenames or file-paths according to a specific and a global Ignored.config file when sorting files in folders. 
 
 # OS Compatibility
 
@@ -23,8 +23,6 @@ Python3: To install python3 on MacOS using Homebrew, run `brew install python3`
 (To get Homebrew, paste `/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)&quot;` into terminal and hit enter. The program will guide you through the steps)
 
 ## Steps of Installation
-
-To install the required packages, run `pip3 install -r requirements.txt`
 
 1. `git clone https://github.com/LivelyCarpet87/FileSorter`
 
