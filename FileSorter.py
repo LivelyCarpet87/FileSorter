@@ -192,8 +192,15 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
                         if ignoreMisplaced:
                             print(filepath+" is misplaced")
                         else:
-                            print(filepath+" is misplaced and placed into "+misplacedDirName)
-                            os.rename(filepath, rootDir+os.sep+misplacedDirName+os.sep+filename)
+                            try:
+                                if os.path.isfile(rootDir+os.sep+misplacedDirName+os.sep+filename):
+                                    print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe.')
+                                else:
+                                    os.rename(filepath, rootDir+os.sep+misplacedDirName+os.sep+filename)
+                                    print(filepath+" is misplaced and placed into "+misplacedDirName)
+                            except OSError:
+                                print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. ')
+
 
     else:
         sys.exit('Directory for '+name+' not valid.')
@@ -270,11 +277,23 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
                         if ignoreMisplaced:
                             print(filepath+" should be returned")
                         else:
-                            print(filepath+" returned")
-                            if dirName != None:
-                                os.rename(filepath, rootDir+os.sep+dirName+os.sep+filename)
-                            elif absolutedir != None:
-                                os.rename(filepath, absolutedir+os.sep+filename)
+                            try:
+                                if dirName != None:
+                                    if os.path.isfile(rootDir+os.sep+dirName+os.sep+filename):
+                                        print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
+                                    else:
+                                        os.rename(filepath, rootDir+os.sep+dirName+os.sep+filename)
+                                        print(filepath+" returned")
+                                elif absolutedir != None:
+                                    if os.path.isfile(absolutedir+os.sep+filename):
+                                        print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
+                                    else:
+                                        os.rename(filepath, absolutedir+os.sep+filename)
+                                        print(filepath+" returned")
+                                else:
+                                    sys.exit('Directory for '+name+' not valid.')
+                            except OSError:
+                                print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
 
     else:
         sys.exit('Directory for '+name+' not valid.')
