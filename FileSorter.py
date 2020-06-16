@@ -26,7 +26,14 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
     projectNames=[]
 
     name=thisBin.get('name',bin)
-    dirName=thisBin.get('dirName',bin)
+    if config.has_option(bin,'dirName'):
+        dirName=thisBin.get('dirName',bin)
+        absolutedir=None
+    elif config.has_option(bin,'absolutedir'):
+        dirName=None
+        absolutedir=thisBin.get('absolutedir',bin)
+    else:
+        sys.exit('Directory for '+name+' not given.')
     if config.has_option(bin,'tag'):
         tag=thisBin.get('tag',bin)
         if config.has_option(bin,'tagAlternative'):
@@ -52,8 +59,11 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
     if regex_tag != None:
         regex_tag = re.compile(regex_tag+r"V\d[\S\s]*"+'$', re.I)
 
+    if dirName != None:
+        walkDir=rootDir+os.sep+dirName
+    elif absolutedir != None:
+        walkDir=absolutedir
 
-    walkDir=rootDir+os.sep+dirName
     if os.path.isdir(walkDir):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
@@ -101,10 +111,18 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
                                     filepath2 = subdir2 + os.sep + filename2
                                     if validTarget(rootDir,name,subdir2,filename2) and (re.search(regexTag, filename2) or re.search(regexTagAlt, filename2)) and (projName not in subdir2):
                                         os.rename(filepath2, subdir2+os.sep+projName+os.sep+filename2)
-
+    else:
+        sys.exit('Directory for '+name+' not valid.')
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
-    dirName=thisBin.get('dirName',bin)
+    if config.has_option(bin,'dirName'):
+        dirName=thisBin.get('dirName',bin)
+        absolutedir=None
+    elif config.has_option(bin,'absolutedir'):
+        dirName=None
+        absolutedir=thisBin.get('absolutedir',bin)
+    else:
+        sys.exit('Directory for '+name+' not given.')
     ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
     misplacedDirName=thisBin.get('misplacedDirName',"Misplaced")
     if config.has_option(bin,'tag'):
@@ -138,7 +156,11 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
         except re.error:
             print("Invalid regular expression given for "+name+", skipping ...")
 
-    walkDir=rootDir+os.sep+dirName
+    if dirName != None:
+        walkDir=rootDir+os.sep+dirName
+    elif absolutedir != None:
+        walkDir=absolutedir
+
     if not os.path.isdir(rootDir+os.sep+misplacedDirName):
         os.mkdir(rootDir+os.sep+misplacedDirName)
     if os.path.isdir(walkDir):
@@ -173,10 +195,20 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
                             print(filepath+" is misplaced and placed into "+misplacedDirName)
                             os.rename(filepath, rootDir+os.sep+misplacedDirName+os.sep+filename)
 
+    else:
+        sys.exit('Directory for '+name+' not valid.')
+
 def returnMisplaced(rootDir,misplacedDirName,thisBin):
     config.read(path+'/fileSortConfiguration/fileSort.config')
     name=thisBin.get('name',bin)
-    dirName=thisBin.get('dirName',bin)
+    if config.has_option(bin,'dirName'):
+        dirName=thisBin.get('dirName',bin)
+        absolutedir=None
+    elif config.has_option(bin,'absolutedir'):
+        dirName=None
+        absolutedir=thisBin.get('absolutedir',bin)
+    else:
+        sys.exit('Directory for '+name+' not given.')
     ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
     if config.has_option(bin,'tag'):
         tag=thisBin.get('tag',bin)
@@ -239,8 +271,13 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
                             print(filepath+" should be returned")
                         else:
                             print(filepath+" returned")
-                            os.rename(filepath, rootDir+os.sep+dirName+os.sep+filename)
+                            if dirName != None:
+                                os.rename(filepath, rootDir+os.sep+dirName+os.sep+filename)
+                            elif absolutedir != None:
+                                os.rename(filepath, absolutedir+os.sep+filename)
 
+    else:
+        sys.exit('Directory for '+name+' not valid.')
 
 #Read Config
 config = configparser.ConfigParser()
