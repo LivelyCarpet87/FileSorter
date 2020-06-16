@@ -27,18 +27,31 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
 
     name=thisBin.get('name',bin)
     dirName=thisBin.get('dirName',bin)
-    tag=thisBin.get('tag',bin)
-    if config.has_option(bin,'tagAlternative'):
-        tagAlternative=thisBin.get('tagAlternative')
+    if config.has_option(bin,'tag'):
+        tag=thisBin.get('tag',bin)
+        if config.has_option(bin,'tagAlternative'):
+            tagAlternative=thisBin.get('tagAlternative')
+        else:
+            tagAlternative=""
+        regexForTag= r"[\S\s]*"+tag+r"_([\S\s]*)V\d[\S\s]*"
+        if tagAlternative!= None:
+            regexForTagAlt= r"[\S\s]*"+tagAlternative+r"_([\S\s]*)V\d[\S\s]*"
     else:
-        tagAlternative=""
-    regexForTag= r"[\S\s]*"+tag+r"_([\S\s]*)V\d[\S\s]*"
-    if tagAlternative!="":
-        regexForTagAlt= r"[\S\s]*"+tagAlternative+r"_([\S\s]*)V\d[\S\s]*"
+        regexForTag=None
+        regexForTagAlt=None
+
+    if config.has_option(bin,'regex_tag'):
+        regex_tag=thisBin.get('regex_tag')
     else:
-        regexForTagAlt=regexForTag
-    regexTag = re.compile(regexForTag+'$', re.I)
-    regexTagAlt = re.compile(regexForTagAlt+'$', re.I)
+        regex_tag=None
+
+    if regexForTag != None:
+        regexTag = re.compile(regexForTag+'$', re.I)
+    if regexForTagAlt != None:
+        regexTagAlt = re.compile(regexForTagAlt+'$', re.I)
+    if regex_tag != None:
+        regex_tag = re.compile(regex_tag+r"V\d[\S\s]*"+'$', re.I)
+
 
     walkDir=rootDir+os.sep+dirName
     if os.path.isdir(walkDir):
@@ -47,14 +60,38 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
                 filepath = subdir + os.sep + filename
                 if validTarget(rootDir,name,subdir,filename):
                     projName=""
-                    if re.search(regexTag, filename):
-                        projName=regexTag.match(filename).group(1)
-                        projectNames.append(projName)
-                        print(projName)
-                    elif re.search(regexTagAlt, filename):
-                        projName=regexTagAlt.match(filename).group(1)
-                        projectNames.append(projName)
-                        print(projName)
+                    matched = False
+                    try:
+                        if re.search(regexTag, filename) and not matched:
+                            projName=regexTag.match(filename).group(1)
+                            projectNames.append(projName)
+                            matched = True
+                    except NameError:
+                        continue
+                    except AttributeError:
+                        continue
+
+                    try:
+                        if regexTagAlt != None and not matched:
+                            if re.search(regexTagAlt, filename):
+                                projName=regexTagAlt.match(filename).group(1)
+                                projectNames.append(projName)
+                                matched = True
+                    except NameError:
+                        continue
+                    except AttributeError:
+                        continue
+                    try:
+                        if regex_tag != None and not matched:
+                            if re.search(regex_tag, filename):
+                                projName=regex_tag.match(filename).group(1)
+                                projectNames.append(projName)
+                                matched = True
+                    except NameError:
+                        continue
+                    except AttributeError:
+                        continue
+
                     if projName!="":
                         if (projectNames.count(projName) >= groupthreshold) and (projName not in subdir):
                             if not os.path.isdir(subdir+os.sep+projName):
@@ -68,25 +105,39 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
     dirName=thisBin.get('dirName',bin)
-    tag=thisBin.get('tag',bin)
-    if config.has_option(bin,'tagAlternative'):
-        tagAlternative=thisBin.get('tagAlternative')
-    else:
-        tagAlternative=""
     ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
     misplacedDirName=thisBin.get('misplacedDirName',"Misplaced")
-    regexForTag_F= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
-    regexForTag_B= r"[\S\s]*"+"_"+tag+r"[\S\s]*"
-    regexForTagAlt_F= r"[\S\s]*"+tagAlternative+"_"+r"[\S\s]*"
-    regexForTagAlt_B= r"[\S\s]*"+"_"+tagAlternative+r"[\S\s]*"
-    regexTag_F = re.compile(r'('+regexForTag_F+')$', re.I)
-    regexTag_B = re.compile(r'('+regexForTag_B+')$', re.I)
-    if tagAlternative!="":
-        regexTagAlt_F = re.compile(r'\.('+regexForTagAlt_F+')$', re.I)
-        regexTagAlt_B = re.compile(r'\.('+regexForTagAlt_B+')$', re.I)
+    if config.has_option(bin,'tag'):
+        tag=thisBin.get('tag',bin)
+        if config.has_option(bin,'tagAlternative'):
+            tagAlternative=thisBin.get('tagAlternative')
+        else:
+            tagAlternative=""
+        regexForTag_F= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+"_"+tag+r"[\S\s]*"
+        if tagAlternative!= None:
+            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+"_"+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+"_"+tagAlternative+r"[\S\s]*"
     else:
-        regexTagAlt_F= regexTag_F
-        regexTagAlt_B= regexTag_B
+        regexForTag_F=None
+        regexForTagAlt_F=None
+    if config.has_option(bin,'regex_tag'):
+        regex_tag=thisBin.get('regex_tag')
+    else:
+        regex_tag=None
+
+    if regexForTag_F != None:
+        regexTag_F = re.compile(regexForTag_F+'$', re.I)
+        regexTag_B = re.compile(regexForTag_B+'$', re.I)
+    if regexForTagAlt_F != None:
+        regexTagAlt_F = re.compile(regexForTagAlt_F+'$', re.I)
+        regexTagAlt_B = re.compile(regexForTagAlt_B+'$', re.I)
+    if regex_tag != None:
+        try:
+            regex_tag = re.compile(regex_tag, re.I)
+        except re.error:
+            print("Invalid regular expression given for "+name+", skipping ...")
+
     walkDir=rootDir+os.sep+dirName
     if not os.path.isdir(rootDir+os.sep+misplacedDirName):
         os.mkdir(rootDir+os.sep+misplacedDirName)
@@ -95,7 +146,25 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
             for filename in files:
                 filepath = subdir + os.sep + filename
                 if validTarget(rootDir,name,subdir,filename):
-                    if (regexTag_F.search(filename) or regexTag_B.search(filename)) or (regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)):
+                    try:
+                        rTag=regexTag_F.search(filename) or regexTag_B.search(filename)
+                    except NameError:
+                        rTag = False
+                    except AttributeError:
+                        rTag = False
+                    try:
+                        rAltTag=regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)
+                    except NameError:
+                        rAltTag = False
+                    except AttributeError:
+                        rAltTag = False
+                    try:
+                        rTagGiven=regex_tag.search(filename)
+                    except NameError:
+                        rTagGiven = False
+                    except AttributeError:
+                        rTagGiven = False
+                    if rTag or rAltTag or rTagGiven:
                         continue
                     else:
                         if ignoreMisplaced:
@@ -109,23 +178,37 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
     dirName=thisBin.get('dirName',bin)
     ignoreMisplaced=config.getboolean(bin, 'ignoreMisplaced')
-    tag=thisBin.get('tag',thisBin)
-    if config.has_option(bin,'tagAlternative'):
-        tagAlternative=thisBin.get('tagAlternative')
+    if config.has_option(bin,'tag'):
+        tag=thisBin.get('tag',bin)
+        if config.has_option(bin,'tagAlternative'):
+            tagAlternative=thisBin.get('tagAlternative')
+        else:
+            tagAlternative=""
+        regexForTag_F= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+"_"+tag+r"[\S\s]*"
+        if tagAlternative!= None:
+            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+"_"+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+"_"+tagAlternative+r"[\S\s]*"
     else:
-        tagAlternative=""
-    regexForTag_F= ".*"+tag+"_"+r"[\S\s]*"
-    regexForTag_B= ".*"+"_"+tag+r"[\S\s]*"
-    regexForTagAlt_F= ".*"+tagAlternative+"_"+r"[\S\s]*"
-    regexForTagAlt_B= ".*"+"_"+tagAlternative+r"[\S\s]*"
-    regexTag_F = re.compile(r'('+regexForTag_F+')$', re.I)
-    regexTag_B = re.compile(r'('+regexForTag_B+')$', re.I)
-    if tagAlternative!="":
-        regexTagAlt_F = re.compile(r'\.('+regexForTagAlt_F+')$', re.I)
-        regexTagAlt_B = re.compile(r'\.('+regexForTagAlt_B+')$', re.I)
+        regexForTag_F=None
+        regexForTagAlt_F=None
+
+    if config.has_option(bin,'regex_tag'):
+        regex_tag=thisBin.get('regex_tag')
     else:
-        regexTagAlt_F= regexTag_F
-        regexTagAlt_B= regexTag_B
+        regex_tag=None
+
+    if regexForTag_F != None:
+        regexTag_F = re.compile(regexForTag_F+'$', re.I)
+        regexTag_B = re.compile(regexForTag_B+'$', re.I)
+    if regexForTagAlt_F != None:
+        regexTagAlt_F = re.compile(regexForTagAlt_F+'$', re.I)
+        regexTagAlt_B = re.compile(regexForTagAlt_B+'$', re.I)
+    if regex_tag != None:
+        try:
+            regex_tag = re.compile(regex_tag, re.I)
+        except re.error:
+            print("Invalid regular expression given for "+name+", skipping ...")
 
     walkDir=rootDir+os.sep+misplacedDirName
     if os.path.isdir(walkDir):
@@ -133,7 +216,25 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
             for filename in files:
                 filepath = subdir + os.sep + filename
                 if validTarget(rootDir,name,subdir,filename):
-                    if (regexTag_F.search(filename) or regexTag_B.search(filename)) or (regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)):
+                    try:
+                        rTag=regexTag_F.search(filename) or regexTag_B.search(filename)
+                    except NameError:
+                        rTag = False
+                    except AttributeError:
+                        rTag = False
+                    try:
+                        rAltTag=regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)
+                    except NameError:
+                        rAltTag = False
+                    except AttributeError:
+                        rAltTag = False
+                    try:
+                        rTagGiven=regex_tag.search(filename)
+                    except NameError:
+                        rTagGiven = False
+                    except AttributeError:
+                        rTagGiven = False
+                    if rTag or rAltTag or rTagGiven:
                         if ignoreMisplaced:
                             print(filepath+" should be returned")
                         else:
@@ -173,6 +274,7 @@ if ('GlobalSettings' in config):
     else:
         print("Error: Invalid root directory.")
 
+existMisplaced=os.path.isdir(rootDir+os.sep+misplacedDirName)
 Sections=config.sections()
 binCount=len(Sections)
 
@@ -201,10 +303,16 @@ for i in range(1,binCount+1):
 misplacedFiles=os.listdir(rootDir+os.sep+misplacedDirName)
 if os.path.exists(rootDir+os.sep+misplacedDirName+"/.DS_Store"):
     misplacedFiles.remove('.DS_Store')
-if (not misplacedFiles) and removeMisplacedDir:
+if (not misplacedFiles) and removeMisplacedDir and existMisplaced:
     print("Removed " + misplacedDirName + " because uneeded")
     if os.path.exists(rootDir+os.sep+misplacedDirName+"/.DS_Store"):
         os.remove(rootDir+os.sep+misplacedDirName+"/.DS_Store")
     os.rmdir(rootDir+os.sep+misplacedDirName)
+elif (not misplacedFiles) and removeMisplacedDir and not existMisplaced:
+    if os.path.exists(rootDir+os.sep+misplacedDirName+"/.DS_Store"):
+        os.remove(rootDir+os.sep+misplacedDirName+"/.DS_Store")
+    os.rmdir(rootDir+os.sep+misplacedDirName)
+elif misplacedFiles:
+    print("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended bin for these files. ")
 else:
     print("Keeping "+misplacedDirName+" in accordance to user settings")
