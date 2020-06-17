@@ -48,7 +48,8 @@ def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
 
 def bunchVersions(rootDir,thisBin,groupthreshold):
     projectNames=[]
-
+    config.read(rootDir+'/fileSortConfiguration/fileSort.config')
+    tag_separator=config.get('GlobalSettings','tag_separator')
     name=thisBin.get('name',bin)
     if config.has_option(bin,'dirName'):
         dirName=thisBin.get('dirName',bin)
@@ -64,9 +65,9 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag= r"[\S\s]*"+tag+r"_([\S\s]*)V\d[\S\s]*"
+        regexForTag= r"[\S\s]*"+tag+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt= r"[\S\s]*"+tagAlternative+r"_([\S\s]*)V\d[\S\s]*"
+            regexForTagAlt= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
     else:
         regexForTag=None
         regexForTagAlt=None
@@ -139,6 +140,8 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
         sys.exit('Directory for '+name+' not valid.')
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
+    config.read(rootDir+'/fileSortConfiguration/fileSort.config')
+    tag_separator=config.get('GlobalSettings','tag_separator')
     if config.has_option(bin,'dirName'):
         dirName=thisBin.get('dirName',bin)
         absolutedir=None
@@ -155,11 +158,11 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag_F= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
-        regexForTag_B= r"[\S\s]*"+"_"+tag+r"[\S\s]*"
+        regexForTag_F= r"[\S\s]*"+tag+re.escape(tag_separator)+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+tag+r"[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+"_"+r"[\S\s]*"
-            regexForTagAlt_B= r"[\S\s]*"+"_"+tagAlternative+r"[\S\s]*"
+            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+tagAlternative+r"[\S\s]*"
     else:
         regexForTag_F=None
         regexForTagAlt_F=None
@@ -230,7 +233,8 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
         sys.exit('Directory for '+name+' not valid.')
 
 def returnMisplaced(rootDir,misplacedDirName,thisBin):
-    config.read(path+'/fileSortConfiguration/fileSort.config')
+    config.read(rootDir+'/fileSortConfiguration/fileSort.config')
+    tag_separator=config.get('GlobalSettings','tag_separator')
     name=thisBin.get('name',bin)
     if config.has_option(bin,'dirName'):
         dirName=thisBin.get('dirName',bin)
@@ -247,11 +251,11 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag_F= r"[\S\s]*"+tag+"_"+r"[\S\s]*"
-        regexForTag_B= r"[\S\s]*"+"_"+tag+r"[\S\s]*"
+        regexForTag_F= r"[\S\s]*"+tag+re.escape(tag_separator)+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+tag+r"[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+"_"+r"[\S\s]*"
-            regexForTagAlt_B= r"[\S\s]*"+"_"+tagAlternative+r"[\S\s]*"
+            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+tagAlternative+r"[\S\s]*"
     else:
         regexForTag_F=None
         regexForTagAlt_F=None
@@ -352,7 +356,9 @@ if ('GlobalSettings' in config):
     if os.path.isdir(rootDir):
         rootDir=rootDir
     else:
-        print("Error: Invalid root directory.")
+        sys.exit("Error: Invalid root directory.")
+else:
+    sys.exit("Error: Global Configuration not found. ")
 
 existMisplaced=os.path.isdir(rootDir+os.sep+misplacedDirName)
 Sections=config.sections()
