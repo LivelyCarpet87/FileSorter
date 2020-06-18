@@ -6,30 +6,36 @@ import argparse
 
 globalIgnored=[]
 
+#this function detirmines if the file passed to it should be ignored
 def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
     global globalIgnored
     if filename[0]==".":
         return False
 
-    with open(rootDir+os.sep+"fileSortConfiguration"+os.sep+"globalIgnored.config", "r") as a_file:
+    with open(rootDir+os.sep+"fileSortConfiguration"+os.sep+"globalIgnored.config", "r") as a_file: #read the global ignore file
         for line in a_file:
-            ignored = line.strip()
-            try:
+            ignored = line.strip() #parse each line as a regex pattern
+            try: #try to match the file to the patterns
                 ignoreCondition=re.compile(ignored)
                 filenameMatches=subdirMatches=len(re.findall(ignoreCondition, filename))
                 subdirMatches=len(re.findall(ignoreCondition, subdir))
                 walkDirMatches=len(re.findall(ignoreCondition, walkDir))
+                #check if it matches in the directory relative to the absolute directory of the file
                 if (subdirMatches + filenameMatches) > walkDirMatches:
-                    if (subdir+os.sep+ filename) not in globalIgnored:
+                    #Check if the user has been notified that the file is ignored
+                    if (subdir+os.sep+ filename) not in globalIgnored:#globalIgnored is an array with absolute path of all ignored files.
+                        #if the file has not been mentioned, tell user.
                         print("\n"+subdir+os.sep+ filename + " ignored according to Global configuration file. ")
                         globalIgnored.append(subdir+os.sep+ filename)
                         if (rootDir + os.sep + misplacedDirName) in subdir:
+                            #warn the user that the file is in the misplaced folder and is ignored.
                             print("WARNING: "+subdir+os.sep+ filename + " is in the misplaced folder. ")
                     return False
             except SyntaxError:
+                #SyntaxError is raised for invalid regex expression, causes the line in ignore file to be skipped
                 print("\n Invalid regular expression given: "+ignored)
 
-    binIgnore=rootDir+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config"
+    binIgnore=rootDir+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config" #read the local ignored file (not applied globally)
     if os.path.exists(binIgnore):
         with open(binIgnore, "r") as a_file:
             for line in a_file:
@@ -40,12 +46,19 @@ def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
                     subdirMatches=len(re.findall(ignoreCondition, subdir))
                     walkDirMatches=len(re.findall(ignoreCondition, walkDir))
                     if subdirMatches > walkDirMatches:
+                        #notify user that file has been ignored.
                         print("\n"+subdir+os.sep+ filename + " ignored according to local configuration file for "+name+". ")
+                        if (rootDir + os.sep + misplacedDirName) in subdir:
+                            #warn the user that the file is in the misplaced folder and is ignored.
+                            print("WARNING: "+subdir+os.sep+ filename + " is in the misplaced folder. ")
                         return False
                 except SyntaxError:
+                    #skip invalid expressions
                     print("\n Invalid regular expression given: "+ignored)
     return True
 
+#put different versions of the same file together. Files named as TAG_filenameV1.0,
+#TAG_filenameV2.1,TAG_filenameV3.0 will be put into folder called filename
 def bunchVersions(rootDir,thisBin,groupthreshold):
     projectNames=[]
     config.read(rootDir+'/fileSortConfiguration/fileSort.config')
@@ -82,7 +95,7 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
     if regexForTagAlt != None:
         regexTagAlt = re.compile(regexForTagAlt+'$', re.I)
     if regex_tag != None:
-        regex_tag = re.compile(regex_tag+r"V\d[\S\s]*"+'$')
+        regex_tag = re.compile('('+regex_tag+')'+r"V\d[\S\s]*"+'$')
 
     if dirName != None:
         walkDir=rootDir+os.sep+dirName
@@ -98,10 +111,10 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
                     matched = False
                     try:
                         if re.search(regexTag, filename) and not matched:
-                            projName=regexTag.match(filename).group(1)
-                            projectNames.append(projName)
+                            projName=regexTag.match(filename).group(1) #try to see if file matches required format.
+                            projectNames.append(projName)#add to list of found project names
                             matched = True
-                    except NameError:
+                    except NameError:#ignore if the regex pattern does not exist or being invalid
                         continue
                     except AttributeError:
                         continue
@@ -128,16 +141,18 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
                         continue
 
                     if projName!="":
-                        if (projectNames.count(projName) >= groupthreshold) and (projName not in subdir):
-                            if not os.path.isdir(subdir+os.sep+projName):
+                        if (projectNames.count(projName) >= groupthreshold) and (projName not in subdir):#if there are numerous versions AND it is not in a folder with the project name:
+                            if not os.path.isdir(subdir+os.sep+projName):#make a directory if it does not exist
                                 os.mkdir(subdir+os.sep+projName)
                             for subdir2, dirs2, files2 in os.walk(walkDir):
                                 for filename2 in files2:
                                     filepath2 = subdir2 + os.sep + filename2
                                     if validTarget(rootDir,name,subdir2,filename2,walkDir,misplacedDirName) and (re.search(regexTag, filename2) or re.search(regexTagAlt, filename2)) and (projName not in subdir2):
-                                        os.rename(filepath2, subdir2+os.sep+projName+os.sep+filename2)
+                                        os.rename(filepath2, subdir2+os.sep+projName+os.sep+filename2)#move files into this directory.
     else:
-        sys.exit('Directory for '+name+' not valid.')
+        sys.exit('Directory for '+name+' not valid.')# quit if the given directory for the folder to sort is invalid, see topmost if condition.
+
+#remove misplaced files and move to misplaced folder.
 def removeMisplaced(rootDir,misplacedDirName,thisBin):
     name=thisBin.get('name',bin)
     config.read(rootDir+'/fileSortConfiguration/fileSort.config')
@@ -232,6 +247,7 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
     else:
         sys.exit('Directory for '+name+' not valid.')
 
+#return the misplaced files to the directories they belong in if they have the corresponding tags.
 def returnMisplaced(rootDir,misplacedDirName,thisBin):
     config.read(rootDir+'/fileSortConfiguration/fileSort.config')
     tag_separator=config.get('GlobalSettings','tag_separator')
@@ -307,6 +323,7 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
                         else:
                             try:
                                 if dirName != None:
+                                    #ignore if duplicate files exist.
                                     if os.path.isfile(rootDir+os.sep+dirName+os.sep+filename):
                                         print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
                                     else:
