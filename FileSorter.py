@@ -137,9 +137,9 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag= r"[\S\s]*"+tag+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
+        regexForTag= r"[\S\s]*"+re.escape(tag)+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
+            regexForTagAlt= r"[\S\s]*"+re.escape(tagAlternative)+re.escape(tag_separator)+r"([\S\s]*)V\d[\S\s]*"
     else:
         regexForTag=None
         regexForTagAlt=None
@@ -233,11 +233,11 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag_F= r"[\S\s]*"+tag+re.escape(tag_separator)+r"[\S\s]*"
-        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+tag+r"[\S\s]*"
+        regexForTag_F= r"[\S\s]*"+re.escape(tag)+re.escape(tag_separator)+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+re.escape(tag)+r"[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"[\S\s]*"
-            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+tagAlternative+r"[\S\s]*"
+            regexForTagAlt_F= r"[\S\s]*"+re.escape(tagAlternative)+re.escape(tag_separator)+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+re.escape(tagAlternative)+r"[\S\s]*"
     else:
         regexForTag_F=None
         regexForTagAlt_F=None
@@ -324,11 +324,11 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
             tagAlternative=thisBin.get('tagAlternative')
         else:
             tagAlternative=""
-        regexForTag_F= r"[\S\s]*"+tag+re.escape(tag_separator)+r"[\S\s]*"
-        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+tag+r"[\S\s]*"
+        regexForTag_F= r"[\S\s]*"+re.escape(tag)+re.escape(tag_separator)+r"[\S\s]*"
+        regexForTag_B= r"[\S\s]*"+re.escape(tag_separator)+re.escape(tag)+r"[\S\s]*"
         if tagAlternative!= None:
-            regexForTagAlt_F= r"[\S\s]*"+tagAlternative+re.escape(tag_separator)+r"[\S\s]*"
-            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+tagAlternative+r"[\S\s]*"
+            regexForTagAlt_F= r"[\S\s]*"+re.escape(tagAlternative)+re.escape(tag_separator)+r"[\S\s]*"
+            regexForTagAlt_B= r"[\S\s]*"+re.escape(tag_separator)+re.escape(tagAlternative)+r"[\S\s]*"
     else:
         regexForTag_F=None
         regexForTagAlt_F=None
