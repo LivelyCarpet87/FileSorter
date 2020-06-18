@@ -6,6 +6,65 @@ import argparse
 
 globalIgnored=[]
 
+def duplicateFileWorkaround(currentDir,targetDir,filename):
+    copyUnderscore2 = re.compile(r"^([\S\s]*)_copy_?(\d)\.([\S\s]*)$")
+    copySpace2 = re.compile(r"^([\S\s]*) copy ?(\d)\.([\S\s]*)$")
+    copyUnderscore = re.compile(r"^([\S\s]*)_copy\.([\S\s]*)$")
+    copySpace = re.compile(r"^([\S\s]*) copy\.([\S\s]*)$")
+    noCopy = re.compile(r"^([\S\s]*)\.([\S\s]*)$")
+
+    if copyUnderscore2.search(filename):
+        attemptCounter=1 + int(copyUnderscore2.match(filename).group(2))
+        underscore=True
+        filenameBase=copyUnderscore2.match(filename).group(1)
+        fileExtension=copyUnderscore2.match(filename).group(3)
+    elif copySpace2.search(filename):
+        attemptCounter=1 + int(copySpace2.match(filename).group(2))
+        underscore=False
+        filenameBase=copySpace2.match(filename).group(1)
+        fileExtension=copySpace2.match(filename).group(3)
+    elif copyUnderscore.search(filename):
+        attemptCounter = 2
+        underscore=True
+        filenameBase=copyUnderscore.match(filename).group(1)
+        fileExtension=copyUnderscore.match(filename).group(2)
+    elif copySpace.search(filename):
+        attemptCounter = 2
+        underscore=False
+        filenameBase=copySpace.match(filename).group(1)
+        fileExtension=copySpace.match(filename).group(2)
+    elif noCopy.search(filename):
+        attemptCounter=1
+        underscore=False
+        filenameBase=noCopy.match(filename).group(1)
+        fileExtension=noCopy.match(filename).group(2)
+    else:
+        print('Too many duplicates of '+targetDir+"/"+filename+'. File has no extention. Program ignoring this file as a failsafe.')
+        return None
+
+    while True:
+        if attemptCounter == 1:
+            newFilename=filenameBase+'.'+fileExtension
+        if attemptCounter == 2 and underscore == True:
+            newFilename=filenameBase+'_copy.'+fileExtension
+        if attemptCounter == 2 and underscore == False:
+            newFilename=filenameBase+' copy.'+fileExtension
+        if attemptCounter > 2 and underscore == True:
+            newFilename=filenameBase+'_copy '+str(attemptCounter-1)+'.'+fileExtension
+        if attemptCounter > 2 and underscore == False:
+            newFilename=filenameBase+' copy '+str(attemptCounter-1)+'.'+fileExtension
+
+        if os.path.isfile(targetDir+os.sep+newFilename):
+            attemptCounter=attemptCounter+1
+        elif attemptCounter > 11:
+            print('Too many duplicates of '+targetDir+"/"+filename+' found. Possible error. Program ignoring this file as a failsafe.')
+        else:
+            break
+    os.rename(currentDir+os.sep+filename, targetDir+os.sep+newFilename)
+    return None
+
+
+
 #this function detirmines if the file passed to it should be ignored
 def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
     global globalIgnored
@@ -148,7 +207,8 @@ def bunchVersions(rootDir,thisBin,groupthreshold):
                                 for filename2 in files2:
                                     filepath2 = subdir2 + os.sep + filename2
                                     if validTarget(rootDir,name,subdir2,filename2,walkDir,misplacedDirName) and (re.search(regexTag, filename2) or re.search(regexTagAlt, filename2)) and (projName not in subdir2):
-                                        os.rename(filepath2, subdir2+os.sep+projName+os.sep+filename2)#move files into this directory.
+                                        duplicateFileWorkaround(subdir2,subdir2+os.sep+projName,filename2)#move files into this directory.
+
     else:
         sys.exit('Directory for '+name+' not valid.')# quit if the given directory for the folder to sort is invalid, see topmost if condition.
 
@@ -235,11 +295,8 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
                             print(filepath+" is misplaced")
                         else:
                             try:
-                                if os.path.isfile(rootDir+os.sep+misplacedDirName+os.sep+filename):
-                                    print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe.')
-                                else:
-                                    os.rename(filepath, rootDir+os.sep+misplacedDirName+os.sep+filename)
-                                    print(filepath+" is misplaced and placed into "+misplacedDirName)
+                                duplicateFileWorkaround(subdir,rootDir+os.sep+misplacedDirName,filename)
+                                print(filepath+" is misplaced and placed into "+misplacedDirName)
                             except OSError:
                                 print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. ')
 
@@ -321,24 +378,16 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
                         if ignoreMisplaced:
                             print(filepath+" should be returned")
                         else:
-                            try:
-                                if dirName != None:
-                                    #ignore if duplicate files exist.
-                                    if os.path.isfile(rootDir+os.sep+dirName+os.sep+filename):
-                                        print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
-                                    else:
-                                        os.rename(filepath, rootDir+os.sep+dirName+os.sep+filename)
-                                        print(filepath+" returned")
-                                elif absolutedir != None:
-                                    if os.path.isfile(absolutedir+os.sep+filename):
-                                        print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
-                                    else:
-                                        os.rename(filepath, absolutedir+os.sep+filename)
-                                        print(filepath+" returned")
-                                else:
-                                    sys.exit('Directory for '+name+' not valid.')
-                            except OSError:
-                                print('Too many duplicates of '+name+"/"+filename+'. Program ignoring this file as a failsafe. Return Canceled.')
+                            if dirName != None:
+                                #ignore if duplicate files exist.
+                                duplicateFileWorkaround(subdir,rootDir+os.sep+dirName,filename)
+                                print(filepath+" returned")
+                            elif absolutedir != None:
+                                duplicateFileWorkaround(subdir,absolutedir,filename)
+                                print(filepath+" returned")
+                            else:
+                                sys.exit('Directory for '+name+' not valid.')
+
 
     else:
         sys.exit('Directory for '+name+' not valid.')
