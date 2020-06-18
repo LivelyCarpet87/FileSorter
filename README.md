@@ -158,4 +158,6 @@ If some function does not work as expected, or if you have any questions, feel f
 
 - [ ] Wrap into an application for automation. 
 
+- [ ] Add logging
 
+- [ ] Add verbosity control
