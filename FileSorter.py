@@ -38,7 +38,7 @@ def duplicateFileWorkaround(currentDir,targetDir,filename):
         filenameBase=noCopy.match(filename).group(1)
         fileExtension=noCopy.match(filename).group(2)
     else:
-        log.warn('Too many duplicates of '+targetDir+"/"+filename+'. File has no extention. Program ignoring this file as a failsafe.')
+        log.warning('Too many duplicates of '+targetDir+"/"+filename+'. File has no extention. Program ignoring this file as a failsafe.')
         return None
 
     while True:
@@ -56,7 +56,7 @@ def duplicateFileWorkaround(currentDir,targetDir,filename):
         if os.path.isfile(targetDir+os.sep+newFilename):
             attemptCounter=attemptCounter+1
         elif attemptCounter > 11:
-            log.warn('Too many duplicates of '+targetDir+"/"+filename+' found. Possible error. Program ignoring this file as a failsafe.')
+            log.warning('Too many duplicates of '+targetDir+"/"+filename+' found. Possible error. Program ignoring this file as a failsafe.')
         else:
             break
     os.rename(currentDir+os.sep+filename, targetDir+os.sep+newFilename)
@@ -67,6 +67,7 @@ def duplicateFileWorkaround(currentDir,targetDir,filename):
 #this function detirmines if the file passed to it should be ignored
 def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
     global globalIgnored
+    global globalWarned
     if filename[0]==".":
         return False
 
@@ -86,12 +87,14 @@ def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
                         log.info("\n"+subdir+os.sep+ filename + " ignored according to Global configuration file. ")
                         globalIgnored.append(subdir+os.sep+ filename)
                         if (rootDir + os.sep + misplacedDirName) in subdir:
-                            #warn the user that the file is in the misplaced folder and is ignored.
-                            log.warn(subdir+os.sep+ filename + " is in the misplaced folder. ")
+                            #warning the user that the file is in the misplaced folder and is ignored.
+                            log.warning(subdir+os.sep+ filename + " is in the misplaced folder. ")
                     return False
-            except SyntaxError:
-                #SyntaxError is raised for invalid regex expression, causes the line in ignore file to be skipped
-                log.warn("\n Invalid regular expression given: "+ignored)
+            except re.error:
+                if ignored not in globalWarned:
+                    #SyntaxError is raised for invalid regex expression, causes the line in ignore file to be skipped
+                    log.warning("\n Invalid regular expression given: "+ignored)
+                    globalWarned.append(ignored)
 
     binIgnore=rootDir+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config" #read the local ignored file (not applied globally)
     if os.path.exists(binIgnore):
@@ -107,12 +110,12 @@ def validTarget(rootDir,name,subdir,filename,walkDir,misplacedDirName):
                         #notify user that file has been ignored.
                         log.info("\n"+subdir+os.sep+ filename + " ignored according to local configuration file for "+name+". ")
                         if (rootDir + os.sep + misplacedDirName) in subdir:
-                            #warn the user that the file is in the misplaced folder and is ignored.
-                            log.warn(subdir+os.sep+ filename + " is in the misplaced folder. ")
+                            #warning the user that the file is in the misplaced folder and is ignored.
+                            log.warning(subdir+os.sep+ filename + " is in the misplaced folder. ")
                         return False
                 except SyntaxError:
                     #skip invalid expressions
-                    log.warn("\n Invalid regular expression given: "+ignored)
+                    log.warning("\n Invalid regular expression given: "+ignored)
     return True
 
 #put different versions of the same file together. Files named as TAG_filenameV1.0,
@@ -255,7 +258,7 @@ def removeMisplaced(rootDir,misplacedDirName,thisBin):
         try:
             regex_tag = re.compile(regex_tag)
         except re.error:
-            log.warn("Invalid regular expression"+regex_tag+" given for "+name+"Ignore file, skipping ...")
+            log.warning("Invalid regular expression"+regex_tag+" given for "+name+"Ignore file, skipping ...")
 
     if dirName != None:
         walkDir=rootDir+os.sep+dirName
@@ -345,7 +348,7 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
         try:
             regex_tag = re.compile(regex_tag, re.I)
         except re.error:
-            log.warn("Invalid regular expression given for "+name+", skipping ...")
+            log.warning("Invalid regular expression given for "+name+", skipping ...")
 
     walkDir=rootDir+os.sep+misplacedDirName
     if os.path.isdir(walkDir):
@@ -390,12 +393,13 @@ def returnMisplaced(rootDir,misplacedDirName,thisBin):
         sys.exit('Directory for '+name+' not valid.')
 
 globalIgnored=[]
+globalWarned=[]
 
 parser = argparse.ArgumentParser(description='Generates settings for fileSort.py')
 parser.add_argument("--logDir",dest='logDir',default=os.getcwd(),required=False)
 verbosityLevel=parser.add_mutually_exclusive_group(required=False)
-verbosityLevel.add_argument('--verbose', '-v', action='count', default=0) #warning/warn, info, debug
-verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)#critical, error/exception, warning/warn
+verbosityLevel.add_argument('--verbose', '-v', action='count', default=0) #warning, info, debug
+verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)#critical, error/exception, warning
 parser.add_argument("--rootDir",dest='path',default=os.getcwd(),required=False)
 args = parser.parse_args()
 logDir=args.logDir
@@ -416,8 +420,8 @@ fh.setLevel(logging.INFO)
 fh.setFormatter(formatter)
 log.addHandler(fh)
 
-fhW = logging.FileHandler('fileSorterWarn.log')
-fhW.setLevel(logging.WARN)
+fhW = logging.FileHandler('fileSorterwarning.log')
+fhW.setLevel(logging.WARNING)
 fhW.setFormatter(formatter)
 log.addHandler(fhW)
 
@@ -431,7 +435,7 @@ elif verbosityLevel == -2:
 elif verbosityLevel == -1:
     ch.setLevel(logging.ERROR)
 elif verbosityLevel == 0:
-    ch.setLevel(logging.WARN)
+    ch.setLevel(logging.WARNING)
 elif verbosityLevel == 1:
     ch.setLevel(logging.INFO)
 elif verbosityLevel == 2:
@@ -459,7 +463,7 @@ if ('GlobalSettings' in config):
     groupthreshold=config.getint('GlobalSettings','groupthreshold')
 
     if not rootStatus:
-        log.warn("fileSort.py disabled in configfile")
+        log.warning("fileSort.py disabled in configfile")
         sys.exit("fileSort.py disabled in configfile")
 
     if os.path.isdir(rootDir):
@@ -510,7 +514,7 @@ elif (not misplacedFiles) and removeMisplacedDir and not existMisplaced:
         os.remove(rootDir+os.sep+misplacedDirName+"/.DS_Store")
     os.rmdir(rootDir+os.sep+misplacedDirName)
 elif misplacedFiles:
-    log.warn("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended bin for these files. ")
+    log.warning("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended bin for these files. ")
 else:
-    log.info("Keeping "+misplacedDirName+" in accordance to user settings")
+    log.info("Keeping "+misplacedDirName+" folder empty.")
 log.info("Done")
