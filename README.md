@@ -142,13 +142,17 @@ The globalIgnored.config file is applied globally. The nameIgnored.config file i
 
 In the file is a set of regular expression patterns separated by newlines. Each line is read as a pattern. If any file's filename or relative path to the file bin matches the pattern, it will be ignored. It is not needed to add files beginning with '.' because they are ignored by default. 
 
+# Advanced Usage
+
+What was given above should be enough for basic usage of this script. To increase potential for automation and customization, further features were added and documented [here](https://github.com/LivelyCarpet87/FileSorter/blob/master/More%20Complex%20Usage.md#more-complex-usage) to prevent information overload. 
+
 # Issues?
 
 If some function does not work as expected, or if you have any questions, feel free to open an issue. When reporting on a potential bug, please increase verbosity with `-vv` flag to enter debug level of STDOUT logging. 
 
 # To-Do
 
-- [ ] Add a interactive config setup script or a GUI application
+- [ ] Add ~~an interactive config setup script or~~ a GUI application
 
 - [ ] Add a script to automatically rename files
 
