@@ -142,6 +142,26 @@ The globalIgnored.config file is applied globally. The nameIgnored.config file i
 
 In the file is a set of regular expression patterns separated by newlines. Each line is read as a pattern. If any file's filename or relative path to the file bin matches the pattern, it will be ignored. It is not needed to add files beginning with '.' because they are ignored by default. 
 
+# fileSorter.py Flags
+
+1. `--logDir`
+   
+   By default, the fileSorter script generates `Logs` folder in the current working directory if none exists. Then it would place all log files in that `Logs` folder. When this flag is passed, it takes the input as an absolute path to the directory to store log files. All generated log files would be stored there.
+
+2. `--rootDir`
+   
+   This flag specifies the root directory for fileSorter.py to traverse. It overrides the default assumption that the current working directory as the root directory for sorting.
+
+3. `--debug`
+   
+   This flag increases the verbosity (the amount of information printed to STDOUT) to debug level. It is only useful for troubleshooting. For basic information, it is recommended to read the log files **INSTEAD OF** enabling this flag. 
+
+# initFileSorter.py Flags
+
+`--rootDir`
+
+This flag specifies the root directory for initFileSorter.py to store the config files and to create config files for. It overrides the default assumption that the current working directory as the root directory for initialization.
+
 # Advanced Usage
 
 What was given above should be enough for basic usage of this script. To increase potential for automation and customization, further features were added and documented [here](https://github.com/LivelyCarpet87/FileSorter/blob/master/More%20Complex%20Usage.md#more-complex-usage) to prevent information overload. 
