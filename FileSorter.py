@@ -8,6 +8,14 @@ import datetime
 
 projectNames = []
 
+# Error Codes (Based off BSD Reserved Codes)
+# regexErr = 128 + 65
+rootDirErr = 128 + 65 + 1
+filebinDirErr = 74
+cantCreateErr = 73
+missingDirErr = 69
+invalidSettingErr = 128 + 78
+configNotFound = 128 + 66
 
 def matchVersionFormat(regexTag, regexTagAlt, regex_tag, filename):
     global projectNames
@@ -117,7 +125,7 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                     if (subdir + os.sep + filename) not in globalIgnored:  # globalIgnored is an array with absolute path of all ignored files.
                         # if the file has not been mentioned, tell user.
                         log.debug(filename + ' matched ' + ignored)
-                        log.info("\n" + subdir + os.sep + filename + " ignored according to Global configuration file. ")
+                        log.info(subdir + os.sep + filename + " ignored according to Global configuration file. ")
                         globalIgnored.append(subdir + os.sep + filename)
                         log.debug(str(subdir + os.sep + filename) + ' added to globalIgnored.')
                         if (rootDir + os.sep + misplacedDirName) in subdir:
@@ -127,7 +135,7 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
             except re.error:
                 if ignored not in globalWarned:
                     # re.error is raised for invalid regex expression, causes the line in ignore file to be skipped
-                    log.error("\n Invalid regular expression given: "+ignored)
+                    log.error("Invalid regular expression given: "+ignored)
                     globalWarned.append(ignored)
                     log.debug(ignored+' added to globalWarned.')
     filebinIgnore = rootDir + os.sep + "fileSortConfiguration" + os.sep + name + "Ignored.config"  # read the local ignored file (not applied globally)
@@ -144,14 +152,14 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                     if subdirMatches > walkDirMatches:
                         # notify user that file has been ignored.
                         log.debug('Filename: ' + subdir + os.sep + filename + ' matched in filename ' + filenameMatches + ' times, matched in subdir ' + subdirMatches + 'times, and matched in walkDir' + walkDirMatches + ' times. ')
-                        log.info("\n" + subdir + os.sep + filename + " ignored according to local configuration file for " + name + ". ")
+                        log.info(subdir + os.sep + filename + " ignored according to local configuration file for " + name + ". ")
                         if (rootDir + os.sep + misplacedDirName) in subdir:
                             # warning the user that the file is in the misplaced folder and is ignored.
                             log.warning(subdir + os.sep + filename + " is in the misplaced folder. ")
                         return False
                 except re.error:
                     # skip invalid expressions
-                    log.error("\n Invalid regular expression given: " + ignored)
+                    log.error("Invalid regular expression given: " + ignored)
     # else: #Creates excessive debug messages, uncomment when needed
         # log.debug('Local ignoredConfig not found for ' + filebinIgnore) #Creates excessive debug messages, uncomment when needed
     return True
@@ -175,7 +183,8 @@ def groupVersions(rootDir, thisFilebin, groupthreshold):
         absolutedir = thisFilebin.get('absolutedir', filebin)
         log.debug('absolutedir: ' + absolutedir)
     else:
-        sys.exit('\n Directory for ' + name + ' not given.')
+        log.critical('Directory for ' + name + ' is missing.')
+        sys.exit(missingDirErr)
 
     if config.has_option(filebin, 'tag'):
         if thisFilebin.get('tag', filebin) != '':
@@ -265,7 +274,8 @@ def groupVersions(rootDir, thisFilebin, groupthreshold):
                                         log.debug('groupVersions -> Multiple versions of filename2 found and moved into ' + subdir2 + os.sep + projName)
 
     else:
-        sys.exit('\n Directory for ' + name + ' not valid.')  # quit if the given directory for the folder to sort is invalid, see topmost if condition.
+        log.critical('Directory for ' + name + ' not valid.')  # quit if the given directory for the folder to sort is invalid, see topmost if condition.
+        sys.exit(filebinDirErr)
 
 
 # remove misplaced files and move to misplaced folder.
@@ -276,7 +286,7 @@ def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
     tag_separator = config.get('GlobalSettings', 'tag_separator')
     if config.has_option(filebin, 'dirName') and config.has_option(filebin, 'absolutedir'):
         log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
-        sys.exit('\n Directory for ' + name + ' not valid.')
+        sys.exit(filebinDirErr)
     elif config.has_option(filebin, 'dirName'):
         dirName = thisFilebin.get('dirName', filebin)
         absolutedir = None
@@ -284,7 +294,8 @@ def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
         dirName = None
         absolutedir = thisFilebin.get('absolutedir', filebin)
     else:
-        sys.exit('\n Directory for ' + name + ' not given.')
+        log.critical('Directory for ' + name + ' is missing.')
+        sys.exit(missingDirErr)
     ignoreMisplaced = config.getboolean(filebin, 'ignoreMisplaced')
     misplacedDirName = thisFilebin.get('misplacedDirName', "Misplaced")
     if config.has_option(filebin, 'tag'):
@@ -379,7 +390,8 @@ def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
                             duplicateFileWorkaround(subdir, rootDir + os.sep + misplacedDirName, filename)
                             log.info(filepath + " is misplaced and placed into " + misplacedDirName)
     else:
-        sys.exit('\n Directory for ' + name + ' not valid.')
+        log.critical('Directory for ' + name + ' not valid.')
+        sys.exit(filebinDirErr)
 
 
 # return the misplaced files to the directories they belong in if they have the corresponding tags.
@@ -390,7 +402,7 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
     log.debug('Returning misplaced files for ' + name)
     if config.has_option(filebin, 'dirName') and config.has_option(filebin, 'absolutedir'):
         log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
-        sys.exit('\n Directory for ' + name + ' not valid.')
+        sys.exit(filebinDirErr)
     elif config.has_option(filebin, 'dirName'):
         dirName = thisFilebin.get('dirName', filebin)
         absolutedir = None
@@ -398,7 +410,8 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
         dirName = None
         absolutedir = thisFilebin.get('absolutedir', filebin)
     else:
-        sys.exit('\n Directory for ' + name + ' not given.')
+        log.critical('Directory for ' + name + ' is missing.')
+        sys.exit(missingDirErr)
     ignoreMisplaced = config.getboolean(filebin, 'ignoreMisplaced')
     if config.has_option(filebin, 'tag'):
         if thisFilebin.get('tag', filebin) is not None:
@@ -488,9 +501,11 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
                                 duplicateFileWorkaround(subdir, absolutedir, filename)
                                 log.info(filepath + " returned")
                             else:
-                                sys.exit('\n Directory for ' + name + ' not valid.')
+                                log.critical('Directory for ' + name + ' not valid.')
+                                sys.exit(filebinDirErr)
     else:
-        sys.exit('\n Directory for ' + name + ' not valid.')
+        log.critical('Directory for ' + name + ' not valid.')
+        sys.exit(filebinDirErr)
 
 globalIgnored = []
 globalWarned = []
@@ -500,6 +515,7 @@ ifCreateLog = parser.add_mutually_exclusive_group(required=False)
 ifCreateLog.add_argument("--logDir", dest='logDir', default='', required=False)
 ifCreateLog.add_argument("--noLog", action='store_true', default=False, required=False)
 verbosityLevel = parser.add_mutually_exclusive_group(required=False)
+verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0)  # debug
 verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, debug
 verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)  # critical, error/exception, warning
 parser.add_argument("--rootDir", dest='path', default=os.getcwd(), required=False)
@@ -509,6 +525,8 @@ verbose = args.verbose
 quiet = args.quiet
 path = args.path
 noLog = args.noLog
+debug = args.debug
+verbosityLevel = verbose - quiet + debug
 if not os.path.isdir(path):
     path = os.getcwd()
 if not noLog:
@@ -518,8 +536,9 @@ if not noLog:
         try:
             os.mkdir(logDir)
         except FileNotFoundError:
-            sys.exit('\n Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--logDir" or pass "--noLog" option. ')
-verbosityLevel = verbose-quiet
+            if verbosityLevel != -3:
+                print('ERROR: Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--logDir" or pass "--noLog" option. ')
+            sys.exit(cantCreateErr)
 
 log = logging.getLogger('FileSorter')
 log.setLevel(logging.DEBUG)
@@ -551,7 +570,8 @@ if verbosityLevel != -3:
     elif verbosityLevel == 2:
         ch.setLevel(logging.DEBUG)
     else:
-        sys.exit("\n ERROR: Invalid verbosity level setting given. Max -vv or -qqq")
+        print("ERROR: Invalid verbosity level setting given. Max -vv or -qqq")
+        sys.exit(invalidSettingErr)
     log.addHandler(ch)
 
 log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(quiet)+', path = '+str(path))
@@ -559,7 +579,7 @@ log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(q
 config = configparser.ConfigParser()
 if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
     log.critical("Configuration files not found at "+path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
-    sys.exit("\n ERROR: Configuration files not found. See log for details. ")
+    sys.exit(configNotFound)
 
 config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
 if ('GlobalSettings' in config):
@@ -574,16 +594,16 @@ if ('GlobalSettings' in config):
     log.debug('rootDir = ' + str(rootDir) + ', misplacedDirName = ' + str(misplacedDirName) + ', rootStatus = ' + str(rootStatus) + ', removeMisplacedDir = ' + str(removeMisplacedDir) + ', groupversions = ' + str(groupversions) + ', groupthreshold = ' + str(groupthreshold))
     if not rootStatus:
         log.warning("fileSort.py disabled in configfile")
-        sys.exit("\n fileSort.py disabled in configfile")
+        sys.exit(0)
 
     if os.path.isdir(rootDir):
         rootDir = rootDir
     else:
         log.critical("Invalid root directory given.")
-        sys.exit("\n Error: Invalid root directory given.")
+        sys.exit(rootDirErr)
 else:
     log.critical("Global Configuration not found in fileSort.config configuration file. ")
-    sys.exit("\n Error: Global Configuration not found in configuration file. ")
+    sys.exit(invalidSettingErr)
 
 existMisplaced = os.path.isdir(rootDir + os.sep + misplacedDirName)
 Sections = config.sections()
@@ -609,7 +629,7 @@ for i in range(1, filebinCount+1):
             if groupversions:
                 groupVersions(rootDir, thisFilebin, groupthreshold)
         else:
-            log.info(thisFilebin.get('name', filebin)+" skipped.")
+            log.info(thisFilebin.get('name',filebin)+" skipped.")
 
 misplacedFiles = os.listdir(rootDir + os.sep + misplacedDirName)
 if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):

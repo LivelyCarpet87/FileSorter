@@ -103,29 +103,30 @@ config['GlobalSettings'] = {'# Root Directory of bins to be sorted': None,
                             'tag_separator': '_'}
 
 binCount=1
-for dir in includeDir:
-    binName="Bin"+str(binCount)
-    name = os.path.basename(dir)
-    config.add_section(binName)
-    config.set(binName, '# User-given name for this bin')
-    config.set(binName,"name",name)
-    config.set(binName, '# Enable this bin?')
-    config.set(binName,"active","ON")
-    config.set(binName, '# AbsoluteDirectory of the folder')
-    config.set(binName,"absolutedir",dir)
-    config.set(binName, '# Tag for files in this bin. ')
-    config.set(binName, '# File called randchar_MISC_randchar.randtype will be put into MISC bin. ')
-    config.set(binName, '# Filename must contain TAG_ in its name to be put into bin')
-    config.set(binName,"tag",name[0:4].upper())
-    config.set(binName, '# Alternative tag for files in this bin. ')
-    config.set(binName,"tagAlternative",name[0:4])
-    config.set(binName, '# Alternative regular expression tag')
-    config.set(binName,"regex_tag",'')
-    config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
-    config.set(binName,"ignoreMisplaced","OFF")
-    if genBinIgnored:
-        f = open("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config", "w")
-    binCount=binCount+1
+if includeDir is not None:
+    for dir in includeDir:
+        binName="Bin"+str(binCount)
+        name = os.path.basename(dir)
+        config.add_section(binName)
+        config.set(binName, '# User-given name for this bin')
+        config.set(binName,"name",name)
+        config.set(binName, '# Enable this bin?')
+        config.set(binName,"active","ON")
+        config.set(binName, '# AbsoluteDirectory of the folder')
+        config.set(binName,"absolutedir",dir)
+        config.set(binName, '# Tag for files in this bin. ')
+        config.set(binName, '# File called randchar_MISC_randchar.randtype will be put into MISC bin. ')
+        config.set(binName, '# Filename must contain TAG_ in its name to be put into bin')
+        config.set(binName,"tag",name[0:4].upper())
+        config.set(binName, '# Alternative tag for files in this bin. ')
+        config.set(binName,"tagAlternative",name[0:4])
+        config.set(binName, '# Alternative regular expression tag')
+        config.set(binName,"regex_tag",'')
+        config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
+        config.set(binName,"ignoreMisplaced","OFF")
+        if genBinIgnored:
+            f = open("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config", "w")
+        binCount=binCount+1
 
 for name in os.listdir(path):
     if os.path.isdir(name) and not os.path.islink(name) and not name=="Misplaced" and not name=="fileSortConfiguration" and not name=="Logs":
