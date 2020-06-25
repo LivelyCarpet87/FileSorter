@@ -7,6 +7,15 @@ import logging
 import datetime
 
 projectNames = []
+print(re.match(r'^\/bin\/?.*', r'/usr/bin'))
+blacklistDir = [r"^\/bin\/?.*", r"^/usr/bin\/?.*",
+r"^/usr/local/bin\/?.*", r"^/sbin\/?.*",
+r"^\/etc\/?.*", r"^\/etc\/rc.d\/?.*", r"^\/usr\/share\/doc\/?.*", r"^\/usr\/man\/?.*", r"^\/dev\/?.*",
+r"^\/proc\/?.*", r"^\/sys\/?.*", r"^\/mnt\/?.*", r"^\/media\/?.*", r"^\/var\/?.*", r"^\/var\/log\/?.*",
+r"^\/var\/spool\/mail\/?.*", r"^\/lib\/?.*", r"^\/usr\/lib\/?.*", r"\/tmp\/?.*", r"\/boot\/?.*",
+"^"+re.escape(r"C:\Program Files")+r".*", "^"+re.escape(r"C:\Program Files (x86)")+r".*",
+"^"+re.escape(r"C:\Windows\System32")+r".*", "^"+re.escape(r"C:\pagefile.sys")+r".*",
+"^"+re.escape(r"C:\System Volume Information")+r".*", "^"+re.escape(r"C:\Windows\WinSxS")+r".*"]
 
 # Error Codes (Based off BSD Reserved Codes)
 # regexErr = 128 + 65
@@ -16,6 +25,27 @@ cantCreateErr = 73
 missingDirErr = 69
 invalidSettingErr = 128 + 78
 configNotFound = 128 + 66
+
+
+class AdminStateUnknownError(Exception):
+    """Cannot determine whether the user is an admin."""
+    pass
+
+
+def isUserAdmin():
+    """Return True if user has admin privileges.
+    Raises:
+        AdminStateUnknownError if user privileges cannot be determined.
+    """
+    try:
+        return os.getuid() == 0
+    except AttributeError:
+        pass
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin() == 1
+    except AttributeError:
+        raise AdminStateUnknownError
+
 
 def matchVersionFormat(regexTag, regexTagAlt, regex_tag, filename):
     global projectNames
@@ -106,7 +136,7 @@ def duplicateFileWorkaround(currentDir, targetDir, filename):
 
 # this function detirmines if the file passed to it should be ignored
 def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
-    # log.debug( 'Testing if '+subdir + os.sep + filename+' should be ignored.') # Creates excessive debug messages, uncomment when needed
+    # log.debug( 'Testing if '+subdir + os.sep + filename+' should be ignored.')  # Creates excessive debug messages, uncomment when needed
     global globalIgnored
     global globalWarned
     if filename[0] == ".":
@@ -119,9 +149,16 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                 filenameMatches = len(re.findall(ignoreCondition, filename))
                 subdirMatches = len(re.findall(ignoreCondition, subdir))
                 walkDirMatches = len(re.findall(ignoreCondition, walkDir))
+                for pattern in blacklistDir:
+                    #log.debug("matching pattern: " + pattern)  # Creates excessive debug messages, uncomment when needed
+                    if re.match(pattern, subdir) is not None and not includeSysFiles:
+                        log.error(subdir + os.sep + filename + " is presumed to be a system file and will not be moved for saftey reasons. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. This decision can be overridden with the --includeSysFiles flag. " + str(re.match(r"/Users/.*", subdir)))
+                        return False
+                    elif re.match(pattern, subdir) is not None and includeSysFiles:
+                        log.warning(subdir + os.sep + filename + " is presumed to be a system file and is not recommended to be sorted. This decision to ignore it was overriden by the USER with the --includeSysFiles flag. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. ")
+                        return False
                 # check if it matches in the directory relative to the absolute directory of the file
-                if (subdirMatches + filenameMatches) > walkDirMatches:
-                    # Check if the user has been notified that the file is ignored
+                if (subdirMatches + filenameMatches) > walkDirMatches and walkDir in subdir:
                     if (subdir + os.sep + filename) not in globalIgnored:  # globalIgnored is an array with absolute path of all ignored files.
                         # if the file has not been mentioned, tell user.
                         log.debug(filename + ' matched ' + ignored)
@@ -519,6 +556,7 @@ verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0) 
 verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, debug
 verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)  # critical, error/exception, warning
 parser.add_argument("--rootDir", dest='path', default=os.getcwd(), required=False)
+parser.add_argument("--includeSysFiles", action='store_true', default=False, required=False)
 args = parser.parse_args()
 logDir = args.logDir
 verbose = args.verbose
@@ -526,6 +564,7 @@ quiet = args.quiet
 path = args.path
 noLog = args.noLog
 debug = args.debug
+includeSysFiles = args.includeSysFiles
 verbosityLevel = verbose - quiet + debug
 if not os.path.isdir(path):
     path = os.getcwd()
@@ -570,11 +609,16 @@ if verbosityLevel != -3:
     elif verbosityLevel == 2:
         ch.setLevel(logging.DEBUG)
     else:
-        print("ERROR: Invalid verbosity level setting given. Max -vv or -qqq")
+        print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --verbose, --quiet, --debug")
         sys.exit(invalidSettingErr)
     log.addHandler(ch)
 
 log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(quiet)+', path = '+str(path))
+
+isUserAdmin=isUserAdmin()
+if isUserAdmin:
+    log.warning("Please do not run this script as root if possible to prevent accidental breaking of system components. \n Please ensure that the configuration files are all protected with the neccessary permissions to prevent abuse. ")
+
 # Read Config
 config = configparser.ConfigParser()
 if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
@@ -610,7 +654,7 @@ Sections = config.sections()
 filebinCount = len(Sections)
 
 for i in range(1, filebinCount+1):
-    filebin = "Filebin"+str(i)
+    filebin = "Bin" + str(i)
     if config.has_section(filebin):
         thisFilebin = config[filebin]
         active = config.getboolean(filebin, 'active')
@@ -620,8 +664,12 @@ for i in range(1, filebinCount+1):
             log.info(thisFilebin.get('name', filebin) + " skipped.")
 
 for i in range(1, filebinCount+1):
-    filebin = "Filebin" + str(i)
-    if config.has_section(filebin):
+    log.debug("Testing if Bin "+str(i)+" found.")
+    filebin = "Bin" + str(i)
+    if not config.has_section(filebin):
+        log.debug("Bin "+str(i)+" not found.")
+    else:
+        log.debug("Bin "+str(i)+" found.")
         thisFilebin = config[filebin]
         active = config.getboolean(filebin, 'active')
         if active:
