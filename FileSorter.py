@@ -25,6 +25,7 @@ cantCreateErr = 73
 missingDirErr = 69
 invalidSettingErr = 128 + 78
 configNotFound = 128 + 66
+permissionsErr = 128 + 13
 
 
 class AdminStateUnknownError(Exception):
@@ -625,7 +626,12 @@ if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSo
     log.critical("Configuration files not found at "+path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
     sys.exit(configNotFound)
 
-config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+try:
+    config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+except PermissionError:
+    log.critical("Unable to open configuration file because of permissions error")
+    sys.exit(permissionsErr)
+
 if ('GlobalSettings' in config):
     GlobalSettings = config['GlobalSettings']
     rootDir = GlobalSettings.get('rootDir')
