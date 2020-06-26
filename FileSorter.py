@@ -142,6 +142,16 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
     global globalWarned
     if filename[0] == ".":
         return False
+    if not os.path.isfile(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config"):
+        log.critical(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config not found. ")
+        sys.exit(configNotFound)
+    try:
+        with open(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as file:
+            del file
+    except PermissionError:
+        log.critical(" Unable to open " + rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config")
+        sys.exit(permissionsErr)
+
     with open(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as a_file:  # read the global ignore file
         for line in a_file:
             ignored = line.strip()  # parse each line as a regex pattern
@@ -177,8 +187,14 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                     globalWarned.append(ignored)
                     log.debug(ignored+' added to globalWarned.')
     filebinIgnore = rootDir + os.sep + "fileSortConfiguration" + os.sep + name + "Ignored.config"  # read the local ignored file (not applied globally)
-    if os.path.exists(filebinIgnore):
+    if os.path.isfile(filebinIgnore):
         # log.debug('Ignore file found for '+name) #Creates excessive debug messages, uncomment when needed
+        try:
+            with open(filebinIgnore, "r") as file:
+                del file
+        except PermissionError:
+            log.critical(" Unable to open " + filebinIgnore)
+            sys.exit(permissionsErr)
         with open(filebinIgnore, "r") as a_file:
             for line in a_file:
                 ignored = line.strip()
