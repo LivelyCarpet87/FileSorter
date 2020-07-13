@@ -1,3 +1,4 @@
 TestDirectories/RunningTest/**
 .DS_Store
 V1/**
+TestDirectories/RenamingTests/**
