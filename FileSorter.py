@@ -7,7 +7,6 @@ import logging
 import datetime
 
 projectNames = []
-print(re.match(r'^\/bin\/?.*', r'/usr/bin'))
 blacklistDir = [r"^\/bin\/?.*", r"^/usr/bin\/?.*",
 r"^/usr/local/bin\/?.*", r"^/sbin\/?.*",
 r"^\/etc\/?.*", r"^\/etc\/rc.d\/?.*", r"^\/usr\/share\/doc\/?.*", r"^\/usr\/man\/?.*", r"^\/dev\/?.*",
@@ -130,7 +129,6 @@ def duplicateFileWorkaround(currentDir, targetDir, filename):
         else:
             break
     os.rename(currentDir + os.sep + filename, targetDir + os.sep + newFilename)
-    print(os.path.isfile(targetDir + os.sep + newFilename))
     log.debug('Moved and renamed ' + str(currentDir + os.sep + filename) + ' to ' + str(targetDir + os.sep + newFilename) + ' with os.rename()')
     return None
 
@@ -561,160 +559,165 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
         log.critical('Directory for ' + name + ' not valid.')
         sys.exit(filebinDirErr)
 
-globalIgnored = []
-globalWarned = []
 
-parser = argparse.ArgumentParser(description='Generates settings for fileSort.py')
-ifCreateLog = parser.add_mutually_exclusive_group(required=False)
-ifCreateLog.add_argument("--logDir", dest='logDir', default='', required=False)
-ifCreateLog.add_argument("--noLog", action='store_true', default=False, required=False)
-verbosityLevel = parser.add_mutually_exclusive_group(required=False)
-verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0)  # debug
-verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, debug
-verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)  # critical, error/exception, warning
-parser.add_argument("--rootDir", dest='path', default=os.getcwd(), required=False)
-parser.add_argument("--includeSysFiles", action='store_true', default=False, required=False)
-args = parser.parse_args()
-logDir = args.logDir
-verbose = args.verbose
-quiet = args.quiet
-path = args.path
-noLog = args.noLog
-debug = args.debug
-includeSysFiles = args.includeSysFiles
-verbosityLevel = verbose - quiet + debug
-if not os.path.isdir(path):
-    path = os.getcwd()
-if not noLog:
-    if logDir == '':
-        logDir = os.getcwd() + os.sep + 'Logs'
-    if not os.path.isdir(logDir):
-        try:
-            os.mkdir(logDir)
-        except FileNotFoundError:
-            if verbosityLevel != -3:
-                print('ERROR: Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--logDir" or pass "--noLog" option. ')
-            sys.exit(cantCreateErr)
+def main():
+    globalIgnored = []
+    globalWarned = []
 
-log = logging.getLogger('FileSorter')
-log.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    parser = argparse.ArgumentParser(description='Generates settings for fileSort.py')
+    ifCreateLog = parser.add_mutually_exclusive_group(required=False)
+    ifCreateLog.add_argument("--logDir", dest='logDir', default='', required=False)
+    ifCreateLog.add_argument("--noLog", action='store_true', default=False, required=False)
+    verbosityLevel = parser.add_mutually_exclusive_group(required=False)
+    verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0)  # debug
+    verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, debug
+    verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)  # critical, error/exception, warning
+    parser.add_argument("--rootDir", dest='path', default=os.getcwd(), required=False)
+    parser.add_argument("--includeSysFiles", action='store_true', default=False, required=False)
+    args = parser.parse_args()
+    logDir = args.logDir
+    verbose = args.verbose
+    quiet = args.quiet
+    path = args.path
+    noLog = args.noLog
+    debug = args.debug
+    includeSysFiles = args.includeSysFiles
+    verbosityLevel = verbose - quiet + debug
+    if not os.path.isdir(path):
+        path = os.getcwd()
+    if not noLog:
+        if logDir == '':
+            logDir = os.getcwd() + os.sep + 'Logs'
+        if not os.path.isdir(logDir):
+            try:
+                os.mkdir(logDir)
+            except FileNotFoundError:
+                if verbosityLevel != -3:
+                    print('ERROR: Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--logDir" or pass "--noLog" option. ')
+                sys.exit(cantCreateErr)
 
-if not noLog:
-    fh = logging.FileHandler(logDir + os.sep + 'fileSorter.log')
-    fh.setLevel(logging.INFO)
-    fh.setFormatter(formatter)
-    log.addHandler(fh)
+    log = logging.getLogger('FileSorter')
+    log.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-if not noLog:
-    fhW = logging.FileHandler(logDir + os.sep + 'fileSorterwarning.log')
-    fhW.setLevel(logging.WARNING)
-    fhW.setFormatter(formatter)
-    log.addHandler(fhW)
+    if not noLog:
+        fh = logging.FileHandler(logDir + os.sep + 'fileSorter.log')
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
 
-ch = logging.StreamHandler(sys.stdout)
-ch.setFormatter(formatter)
-if verbosityLevel != -3:
-    if verbosityLevel == -2:
-        ch.setLevel(logging.CRITICAL)
-    elif verbosityLevel == -1:
-        ch.setLevel(logging.ERROR)
-    elif verbosityLevel == 0:
-        ch.setLevel(logging.WARNING)
-    elif verbosityLevel == 1:
-        ch.setLevel(logging.INFO)
-    elif verbosityLevel == 2:
-        ch.setLevel(logging.DEBUG)
+    if not noLog:
+        fhW = logging.FileHandler(logDir + os.sep + 'fileSorterwarning.log')
+        fhW.setLevel(logging.WARNING)
+        fhW.setFormatter(formatter)
+        log.addHandler(fhW)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(formatter)
+    if verbosityLevel != -3:
+        if verbosityLevel == -2:
+            ch.setLevel(logging.CRITICAL)
+        elif verbosityLevel == -1:
+            ch.setLevel(logging.ERROR)
+        elif verbosityLevel == 0:
+            ch.setLevel(logging.WARNING)
+        elif verbosityLevel == 1:
+            ch.setLevel(logging.INFO)
+        elif verbosityLevel == 2:
+            ch.setLevel(logging.DEBUG)
+        else:
+            print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --verbose, --quiet, --debug")
+            sys.exit(invalidSettingErr)
+        log.addHandler(ch)
+
+    log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(quiet)+', path = '+str(path))
+
+    isUserAdmin=isUserAdmin()
+    if isUserAdmin:
+        log.warning("Please do not run this script as root if possible to prevent accidental breaking of system components. \n Please ensure that the configuration files are all protected with the neccessary permissions to prevent abuse. ")
+
+    # Read Config
+    config = configparser.ConfigParser()
+    if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
+        log.critical("Configuration files not found at "+path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
+        sys.exit(configNotFound)
+
+    try:
+        config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+    except PermissionError:
+        log.critical("Unable to open configuration file because of permissions error")
+        sys.exit(permissionsErr)
+
+    if ('GlobalSettings' in config):
+        GlobalSettings = config['GlobalSettings']
+        rootDir = GlobalSettings.get('rootDir')
+        misplacedDirName = GlobalSettings.get('misplacedDirName', "Misplaced")
+        rootStatus = config.getboolean('GlobalSettings', 'rootStatus')
+        removeMisplacedDir = config.getboolean('GlobalSettings', 'removeMisplacedDir')
+        groupversions = config.getboolean('GlobalSettings', 'groupversions')
+        groupthreshold = config.getint('GlobalSettings', 'groupthreshold')
+
+        log.debug('rootDir = ' + str(rootDir) + ', misplacedDirName = ' + str(misplacedDirName) + ', rootStatus = ' + str(rootStatus) + ', removeMisplacedDir = ' + str(removeMisplacedDir) + ', groupversions = ' + str(groupversions) + ', groupthreshold = ' + str(groupthreshold))
+        if not rootStatus:
+            log.warning("fileSort.py disabled in configfile")
+            sys.exit(0)
+
+        if os.path.isdir(rootDir):
+            rootDir = rootDir
+        else:
+            log.critical("Invalid root directory given.")
+            sys.exit(rootDirErr)
     else:
-        print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --verbose, --quiet, --debug")
+        log.critical("Global Configuration not found in fileSort.config configuration file. ")
         sys.exit(invalidSettingErr)
-    log.addHandler(ch)
 
-log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(quiet)+', path = '+str(path))
+    existMisplaced = os.path.isdir(rootDir + os.sep + misplacedDirName)
+    Sections = config.sections()
+    filebinCount = len(Sections)
 
-isUserAdmin=isUserAdmin()
-if isUserAdmin:
-    log.warning("Please do not run this script as root if possible to prevent accidental breaking of system components. \n Please ensure that the configuration files are all protected with the neccessary permissions to prevent abuse. ")
+    for i in range(1, filebinCount+1):
+        filebin = "Bin" + str(i)
+        if config.has_section(filebin):
+            thisFilebin = config[filebin]
+            active = config.getboolean(filebin, 'active')
+            if active:
+                removeMisplaced(rootDir, misplacedDirName, thisFilebin)
+            else:
+                log.info(thisFilebin.get('name', filebin) + " skipped.")
 
-# Read Config
-config = configparser.ConfigParser()
-if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
-    log.critical("Configuration files not found at "+path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
-    sys.exit(configNotFound)
-
-try:
-    config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
-except PermissionError:
-    log.critical("Unable to open configuration file because of permissions error")
-    sys.exit(permissionsErr)
-
-if ('GlobalSettings' in config):
-    GlobalSettings = config['GlobalSettings']
-    rootDir = GlobalSettings.get('rootDir')
-    misplacedDirName = GlobalSettings.get('misplacedDirName', "Misplaced")
-    rootStatus = config.getboolean('GlobalSettings', 'rootStatus')
-    removeMisplacedDir = config.getboolean('GlobalSettings', 'removeMisplacedDir')
-    groupversions = config.getboolean('GlobalSettings', 'groupversions')
-    groupthreshold = config.getint('GlobalSettings', 'groupthreshold')
-
-    log.debug('rootDir = ' + str(rootDir) + ', misplacedDirName = ' + str(misplacedDirName) + ', rootStatus = ' + str(rootStatus) + ', removeMisplacedDir = ' + str(removeMisplacedDir) + ', groupversions = ' + str(groupversions) + ', groupthreshold = ' + str(groupthreshold))
-    if not rootStatus:
-        log.warning("fileSort.py disabled in configfile")
-        sys.exit(0)
-
-    if os.path.isdir(rootDir):
-        rootDir = rootDir
-    else:
-        log.critical("Invalid root directory given.")
-        sys.exit(rootDirErr)
-else:
-    log.critical("Global Configuration not found in fileSort.config configuration file. ")
-    sys.exit(invalidSettingErr)
-
-existMisplaced = os.path.isdir(rootDir + os.sep + misplacedDirName)
-Sections = config.sections()
-filebinCount = len(Sections)
-
-for i in range(1, filebinCount+1):
-    filebin = "Bin" + str(i)
-    if config.has_section(filebin):
-        thisFilebin = config[filebin]
-        active = config.getboolean(filebin, 'active')
-        if active:
-            removeMisplaced(rootDir, misplacedDirName, thisFilebin)
+    for i in range(1, filebinCount+1):
+        log.debug("Testing if Bin "+str(i)+" found.")
+        filebin = "Bin" + str(i)
+        if not config.has_section(filebin):
+            log.debug("Bin "+str(i)+" not found.")
         else:
-            log.info(thisFilebin.get('name', filebin) + " skipped.")
+            log.debug("Bin "+str(i)+" found.")
+            thisFilebin = config[filebin]
+            active = config.getboolean(filebin, 'active')
+            if active:
+                returnMisplaced(rootDir, misplacedDirName, thisFilebin)
+                if groupversions:
+                    groupVersions(rootDir, thisFilebin, groupthreshold)
+            else:
+                log.info(thisFilebin.get('name',filebin)+" skipped.")
 
-for i in range(1, filebinCount+1):
-    log.debug("Testing if Bin "+str(i)+" found.")
-    filebin = "Bin" + str(i)
-    if not config.has_section(filebin):
-        log.debug("Bin "+str(i)+" not found.")
-    else:
-        log.debug("Bin "+str(i)+" found.")
-        thisFilebin = config[filebin]
-        active = config.getboolean(filebin, 'active')
-        if active:
-            returnMisplaced(rootDir, misplacedDirName, thisFilebin)
-            if groupversions:
-                groupVersions(rootDir, thisFilebin, groupthreshold)
-        else:
-            log.info(thisFilebin.get('name',filebin)+" skipped.")
-
-misplacedFiles = os.listdir(rootDir + os.sep + misplacedDirName)
-if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):
-    misplacedFiles.remove('.DS_Store')
-if (not misplacedFiles) and removeMisplacedDir and existMisplaced:
-    log.info("Removed " + misplacedDirName + " because uneeded")
-    if os.path.exists(rootDir + os.sep + misplacedDirNameos.sep+".DS_Store"):
-        os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
-    os.rmdir(rootDir + os.sep + misplacedDirName)
-elif (not misplacedFiles) and removeMisplacedDir and not existMisplaced:
+    misplacedFiles = os.listdir(rootDir + os.sep + misplacedDirName)
     if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):
-        os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
-    os.rmdir(rootDir + os.sep + misplacedDirName)
-elif misplacedFiles:
-    log.warning("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended filebin for these files. ")
-else:
-    log.info("Keeping "+misplacedDirName+" folder empty.")
-log.info("Finished")
+        misplacedFiles.remove('.DS_Store')
+    if (not misplacedFiles) and removeMisplacedDir and existMisplaced:
+        log.info("Removed " + misplacedDirName + " because uneeded")
+        if os.path.exists(rootDir + os.sep + misplacedDirNameos.sep+".DS_Store"):
+            os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
+        os.rmdir(rootDir + os.sep + misplacedDirName)
+    elif (not misplacedFiles) and removeMisplacedDir and not existMisplaced:
+        if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):
+            os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
+        os.rmdir(rootDir + os.sep + misplacedDirName)
+    elif misplacedFiles:
+        log.warning("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended filebin for these files. ")
+    else:
+        log.info("Keeping "+misplacedDirName+" folder empty.")
+    log.info("Finished")
+
+if __name__ == '__main__':
+    main()

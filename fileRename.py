@@ -218,6 +218,6 @@ def undoRenameFolderAndSub():
                 elif tag in newName:
                     print("\nSkipped " + path + os.sep + name+" because the program is uncertain how to remove the tag from the name.")
 
-
-while True:
-    main()
+if __name__ == '__main__':
+    while True:
+        main()
