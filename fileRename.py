@@ -3,14 +3,23 @@ import re
 import time
 
 def main():
-    print("Current working directory (folder location): " + os.getcwd())
-    print("Options:\n\
-    1. Rename files to include tag in current folder\n\
-    2. Rename files to include tag in current folder and all subfolders\n\
-    3. Rename files to remove tag in current folder\n\
-    4. Rename files to remove tag in current folder and all subfolders\n\
-    5. Change current working directory (the folder you are in)\n\
+    print("Current target folder: " + os.getcwd())
+    if __name__ == '__main__':
+        print("Options:\n\
+    1. Add tag to files in target folder\n\
+    2. Add tag to files in target folder AND ALL subfolders\n\
+    3. Remove tag from files in target folder\n\
+    4. Rename tag from files in target folder AND ALL subfolders\n\
+    5. Change target folder\n\
     6. Exit\n\
+    ")
+    else:
+        print("Options:\n\
+    1. Add tag to files in target folder\n\
+    2. Add tag to files in target folder AND ALL subfolders\n\
+    3. Remove tag from files in target folder\n\
+    4. Rename tag from files in target folder AND ALL subfolders\n\
+    6. Back\n\
     ")
     while True:
         userChoice = input("Choice Num > ")
@@ -30,15 +39,19 @@ def main():
         undoRenameFolder()
     elif userChoice == 4:
         undoRenameFolderAndSub()
-    elif userChoice == 5:
+    elif userChoice == 5 and __name__ == '__main__':
         changeWorkingDir()
     elif userChoice == 6:
-        exit()
+        if __name__ == '__main__':
+            exit()
+        else:
+            os.system('clear')
+            return None
     else:
         print("Invalid choice option.")
 
 def changeWorkingDir():
-    print("Current working directory is " + str(os.getcwd()))
+    print("Current target folder is " + str(os.getcwd()))
     time.sleep(1)
     print("Current subfolders:")
     subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
@@ -50,16 +63,21 @@ def changeWorkingDir():
         newDir = input("Change to: ")
         if os.path.isdir(newDir):
             break
+        elif newDir == "!back":
+            return None
         else:
-            print("Invalid input. Please give a valid path.")
+            print("Invalid input. Please give a valid folder path. To go back, enter" + '"!back"')
 
     os.chdir(newDir)
 
 
 def renamingOptions():
     print("Verify the renaming of all files manually (or rename automatically)? [Y]/n")
+    print("To go back, enter" + '"!back"')
     while True:
         choice = input("> ")
+        if choice == "!back":
+            return None
         if choice is "":
             choice = "y"
         if type(choice) == str:
@@ -75,11 +93,14 @@ def renamingOptions():
 
 
 def renamingTag():
-    print("Please input the tag to be included into the filenames. ")
-    print('For example, "APPL" will cause the file named "myfile.txt"')
-    print('to be renamed into "APPL_myfile.txt" ')
+    print('Please input the tag to be included into the filenames. \
+    For example, "APPL" will cause the file named "myfile.txt" \
+    to be renamed into "APPL_myfile.txt" ')
+    print("To go back, enter" + '"!back"')
     while True:
         tag = input("TAG: ")
+        if tag == "!back":
+            return ""
         if type(tag) == str:
             if len(tag) >= 2 and '_' not in tag and ' ' not in tag and os.sep not in tag and tag[0] != '.':
                 return tag
@@ -94,11 +115,14 @@ def renamingTag():
 
 
 def undoRenamingTag():
-    print("Please input the tag to be removed from the filenames. ")
-    print('For example, "APPL" will cause the file named "APPL_myfile.txt" to be renamed into "myfile.txt" ')
-    print('The program will exit this mode if no files with the tag are found. ')
+    print('Please input the tag to be removed from the filenames. \
+    For example, "APPL" will cause the file named "APPL_myfile.txt" to be renamed into "myfile.txt" \
+    The program will exit this mode if no files with the tag are found. ')
+    print("To go back, enter" + '"!back"')
     while True:
-        tag = input("TAG: ")
+        tag = input("Remove TAG: ")
+        if tag == "!back":
+            return ""
         if type(tag) == str:
             if len(tag) >= 2 and '_' not in tag and ' ' not in tag and os.sep not in tag and tag[0] != '.':
                 return tag
@@ -113,18 +137,22 @@ def undoRenamingTag():
 
 
 def renameFolder():
-    interateThrough = renamingOptions()
+    iterateThrough = renamingOptions()
+    if iterateThrough is None:
+        return None
     tag = renamingTag() + '_'
+    if tag == '_':
+        return None
     for name in os.listdir(os.getcwd()):
         if os.path.isfile('.' + os.sep + name) and not os.path.isfile('.' + os.sep + tag + name) and tag not in name and name[0] != '.':
-            if interateThrough:
+            if iterateThrough:
                 while True:
-                    choice = input("Rename " + str(name) +" > ")
+                    choice = input("Rename " + str(name) +" y/n> ")
                     if type(choice) == str:
                         if choice in ["Y","y","Yes","yes","YES"]:
                             os.rename('.' + os.sep + name, '.' + os.sep + tag + name)
                             break
-                        else:
+                        elif choice in ["N","n","No","no","NO"]:
                             print("\nSkipped "+ name +" per user choice. ")
                             break
             else:
@@ -136,20 +164,24 @@ def renameFolder():
 
 
 def renameFolderAndSub():
-    interateThrough = renamingOptions()
+    iterateThrough = renamingOptions()
+    if iterateThrough is None:
+        return None
     tag = renamingTag() + '_'
+    if tag == '_':
+        return None
     for path, folders, names in os.walk(".", topdown=False):
         for name in names:
             nameFull = os.path.join(path, name)
             if os.path.isfile(nameFull) and not os.path.isfile(path + os.sep + tag + name) and tag not in name and name[0] != '.':
-                if interateThrough:
+                if iterateThrough:
                     while True:
                         choice = input("Rename " + str(nameFull) +" > ")
                         if type(choice) == str:
                             if choice in ["Y","y","Yes","yes","YES"]:
                                 os.rename(path + os.sep + name, path + os.sep + tag + name)
                                 break
-                            else:
+                            elif choice in ["N","n","No","no","NO"]:
                                 print("Skipped "+ nameFull +" per user choice.\n")
                                 break
                 else:
@@ -168,20 +200,24 @@ def undoRename(tag,filename):
 
 
 def undoRenameFolder():
-    interateThrough = renamingOptions()
+    iterateThrough = renamingOptions()
+    if iterateThrough is None:
+        return None
     tag = undoRenamingTag() + '_'
+    if tag == '_':
+        return None
     for name in os.listdir(os.getcwd()):
         if undoRename(tag,name) is not None:
             newName = undoRename(tag,name)
             if os.path.isfile('.' + os.sep + name) and not os.path.isfile('.' + os.sep + newName) and tag not in newName and name[0] != '.':
-                if interateThrough:
+                if iterateThrough:
                     while True:
                         choice = input("Rename " + str(name) +" > ")
                         if type(choice) == str:
                             if choice in ["Y","y","Yes","yes","YES"]:
                                 os.rename('.' + os.sep + name, '.' + os.sep + newName)
                                 break
-                            else:
+                            elif choice in ["N","n","No","no","NO"]:
                                 print("\nSkipped "+ name +" per user choice. ")
                                 break
                 else:
@@ -193,22 +229,26 @@ def undoRenameFolder():
 
 
 def undoRenameFolderAndSub():
-    interateThrough = renamingOptions()
+    iterateThrough = renamingOptions()
+    if iterateThrough is None:
+        return None
     tag = undoRenamingTag() + '_'
+    if tag == '_':
+        return None
     for path, folders, names in os.walk(".", topdown=False):
         for name in names:
             if undoRename(tag,name) is not None:
                 newName = undoRename(tag,name)
                 nameFull = os.path.join(path, name)
                 if os.path.isfile(nameFull) and not os.path.isfile(path + os.sep + newName) and tag not in newName and name[0] != '.':
-                    if interateThrough:
+                    if iterateThrough:
                         while True:
                             choice = input("Rename " + str(nameFull) + " to " + newName +"? > ")
                             if type(choice) == str:
                                 if choice in ["Y","y","Yes","yes","YES"]:
                                     os.rename(path + os.sep + name, path + os.sep + newName)
                                     break
-                                else:
+                                elif choice in ["N","n","No","no","NO"]:
                                     print("Skipped "+ nameFull +" per user choice.\n")
                                     break
                     else:

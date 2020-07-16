@@ -26,6 +26,14 @@ invalidSettingErr = 128 + 78
 configNotFound = 128 + 66
 permissionsErr = 128 + 13
 
+this = sys.modules[__name__]
+
+this.log = logging.getLogger('FileSorter')
+this.log.setLevel(logging.DEBUG)
+
+this.globalIgnored = []
+this.globalWarned = []
+
 
 class AdminStateUnknownError(Exception):
     """Cannot determine whether the user is an admin."""
@@ -68,10 +76,10 @@ def matchVersionFormat(regexTag, regexTagAlt, regex_tag, filename):
 
 
 def duplicateFileWorkaround(currentDir, targetDir, filename):
-    log.debug('Trying to move ' + currentDir + os.sep + filename + ' to ' + targetDir + os.sep + filename)
+    this.log.debug('Trying to move ' + currentDir + os.sep + filename + ' to ' + targetDir + os.sep + filename)
     if not os.path.isfile(targetDir + os.sep + filename):
         os.rename(currentDir + os.sep + filename, targetDir + os.sep + filename)
-        log.debug('Moved and renamed ' + str(currentDir + os.sep + filename) + ' to ' + str(targetDir + os.sep + filename) + ' with os.rename()')
+        this.log.debug('Moved and renamed ' + str(currentDir + os.sep + filename) + ' to ' + str(targetDir + os.sep + filename) + ' with os.rename()')
         return None
     copyUnderscore2 = re.compile(r"^([\S\s]*)_copy_?(\d)\.([\S\s]*)$")
     copySpace2 = re.compile(r"^([\S\s]*) copy ?(\d)\.([\S\s]*)$")
@@ -105,7 +113,7 @@ def duplicateFileWorkaround(currentDir, targetDir, filename):
         filenameBase = noCopy.match(filename).group(1)
         fileExtension = noCopy.match(filename).group(2)
     else:
-        log.error('Too many duplicates of ' + targetDir + os.sep + filename + '. File has no extention. Program ignoring this file as a failsafe.')
+        this.log.error('Too many duplicates of ' + targetDir + os.sep + filename + '. File has no extention. Program ignoring this file as a failsafe.')
         return None
 
     while True:
@@ -119,38 +127,36 @@ def duplicateFileWorkaround(currentDir, targetDir, filename):
             newFilename = filenameBase + '_copy ' + str(attemptCounter-1) + '.' + fileExtension
         if attemptCounter > 2 and underscore is False:
             newFilename = filenameBase + ' copy ' + str(attemptCounter-1) + '.' + fileExtension
-        log.debug('attemptCounter=' + str(attemptCounter) + ' newFilename=' + newFilename)
+        this.log.debug('attemptCounter=' + str(attemptCounter) + ' newFilename=' + newFilename)
 
         if os.path.isfile(targetDir + os.sep + newFilename):
             attemptCounter = attemptCounter + 1
-            log.debug(targetDir + os.sep + newFilename + ' already exists. Trying again. ')
+            this.log.debug(targetDir + os.sep + newFilename + ' already exists. Trying again. ')
         elif attemptCounter > 11:
-            log.error('Too many duplicates of ' + targetDir + os.sep + filename + ' found. Possible error. Program ignoring this file as a failsafe.')
+            this.log.error('Too many duplicates of ' + targetDir + os.sep + filename + ' found. Possible error. Program ignoring this file as a failsafe.')
         else:
             break
     os.rename(currentDir + os.sep + filename, targetDir + os.sep + newFilename)
-    log.debug('Moved and renamed ' + str(currentDir + os.sep + filename) + ' to ' + str(targetDir + os.sep + newFilename) + ' with os.rename()')
+    this.log.debug('Moved and renamed ' + str(currentDir + os.sep + filename) + ' to ' + str(targetDir + os.sep + newFilename) + ' with os.rename()')
     return None
 
 
 # this function detirmines if the file passed to it should be ignored
-def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
-    # log.debug( 'Testing if '+subdir + os.sep + filename+' should be ignored.')  # Creates excessive debug messages, uncomment when needed
-    global globalIgnored
-    global globalWarned
+def validTarget(name, subdir, filename, walkDir):
+    # this.log.debug( 'Testing if '+subdir + os.sep + filename+' should be ignored.')  # Creates excessive this.debug messages, uncomment when needed
     if filename[0] == ".":
         return False
-    if not os.path.isfile(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config"):
-        log.critical(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config not found. ")
+    if not os.path.isfile(this.rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config"):
+        this.log.critical(this.rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config not found. ")
         sys.exit(configNotFound)
     try:
-        with open(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as file:
+        with open(this.rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as file:
             del file
     except PermissionError:
-        log.critical(" Unable to open " + rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config")
+        this.log.critical(" Unable to open " + this.rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config")
         sys.exit(permissionsErr)
 
-    with open(rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as a_file:  # read the global ignore file
+    with open(this.rootDir + os.sep + "fileSortConfiguration" + os.sep + "globalIgnored.config", "r") as a_file:  # read the global ignore file
         for line in a_file:
             ignored = line.strip()  # parse each line as a regex pattern
             try:  # try to match the file to the patterns
@@ -159,39 +165,39 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                 subdirMatches = len(re.findall(ignoreCondition, subdir))
                 walkDirMatches = len(re.findall(ignoreCondition, walkDir))
                 for pattern in blacklistDir:
-                    #log.debug("matching pattern: " + pattern)  # Creates excessive debug messages, uncomment when needed
-                    if re.match(pattern, subdir) is not None and not includeSysFiles:
-                        log.error(subdir + os.sep + filename + " is presumed to be a system file and will not be moved for saftey reasons. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. This decision can be overridden with the --includeSysFiles flag. " + str(re.match(r"/Users/.*", subdir)))
+                    #this.log.debug("matching pattern: " + pattern)  # Creates excessive this.debug messages, uncomment when needed
+                    if re.match(pattern, subdir) is not None and not this.includeSysFiles:
+                        this.log.error(subdir + os.sep + filename + " is presumed to be a system file and will not be moved for saftey reasons. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. This decision can be overridden with the --this.includeSysFiles flag. " + str(re.match(r"/Users/.*", subdir)))
                         return False
-                    elif re.match(pattern, subdir) is not None and includeSysFiles:
-                        log.warning(subdir + os.sep + filename + " is presumed to be a system file and is not recommended to be sorted. This decision to ignore it was overriden by the USER with the --includeSysFiles flag. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. ")
+                    elif re.match(pattern, subdir) is not None and this.includeSysFiles:
+                        this.log.warning(subdir + os.sep + filename + " is presumed to be a system file and is not recommended to be sorted. This decision to ignore it was overriden by the USER with the --this.includeSysFiles flag. It has matched the pattern: " + pattern + " If you believe this is mistaken, please open an issue. ")
                         return False
                 # check if it matches in the directory relative to the absolute directory of the file
                 if (subdirMatches + filenameMatches) > walkDirMatches and walkDir in subdir:
-                    if (subdir + os.sep + filename) not in globalIgnored:  # globalIgnored is an array with absolute path of all ignored files.
+                    if (subdir + os.sep + filename) not in this.globalIgnored:  # this.globalIgnored is an array with absolute this.path of all ignored files.
                         # if the file has not been mentioned, tell user.
-                        log.debug(filename + ' matched ' + ignored)
-                        log.info(subdir + os.sep + filename + " ignored according to Global configuration file. ")
-                        globalIgnored.append(subdir + os.sep + filename)
-                        log.debug(str(subdir + os.sep + filename) + ' added to globalIgnored.')
-                        if (rootDir + os.sep + misplacedDirName) in subdir:
+                        this.log.debug(filename + ' matched ' + ignored)
+                        this.log.info(subdir + os.sep + filename + " ignored according to Global configuration file. ")
+                        this.globalIgnored.append(subdir + os.sep + filename)
+                        this.log.debug(str(subdir + os.sep + filename) + ' added to this.globalIgnored.')
+                        if (this.rootDir + os.sep + this.misplacedDirName) in subdir:
                             # warning the user that the file is in the misplaced folder and is ignored.
-                            log.warning(subdir + os.sep + filename + " is in the misplaced folder. ")
+                            this.log.warning(subdir + os.sep + filename + " is in the misplaced folder. ")
                     return False
             except re.error:
-                if ignored not in globalWarned:
+                if ignored not in this.globalWarned:
                     # re.error is raised for invalid regex expression, causes the line in ignore file to be skipped
-                    log.error("Invalid regular expression given: "+ignored)
-                    globalWarned.append(ignored)
-                    log.debug(ignored+' added to globalWarned.')
-    filebinIgnore = rootDir + os.sep + "fileSortConfiguration" + os.sep + name + "Ignored.config"  # read the local ignored file (not applied globally)
+                    this.log.error("Invalid regular expression given: "+ignored)
+                    this.globalWarned.append(ignored)
+                    this.log.debug(ignored+' added to this.globalWarned.')
+    filebinIgnore = this.rootDir + os.sep + "fileSortConfiguration" + os.sep + name + "Ignored.config"  # read the local ignored file (not applied globally)
     if os.path.isfile(filebinIgnore):
-        # log.debug('Ignore file found for '+name) #Creates excessive debug messages, uncomment when needed
+        # this.log.debug('Ignore file found for '+name) #Creates excessive this.debug messages, uncomment when needed
         try:
             with open(filebinIgnore, "r") as file:
                 del file
         except PermissionError:
-            log.critical(" Unable to open " + filebinIgnore)
+            this.log.critical(" Unable to open " + filebinIgnore)
             sys.exit(permissionsErr)
         with open(filebinIgnore, "r") as a_file:
             for line in a_file:
@@ -203,49 +209,49 @@ def validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
                     walkDirMatches = len(re.findall(ignoreCondition, walkDir))
                     if subdirMatches > walkDirMatches:
                         # notify user that file has been ignored.
-                        log.debug('Filename: ' + subdir + os.sep + filename + ' matched in filename ' + filenameMatches + ' times, matched in subdir ' + subdirMatches + 'times, and matched in walkDir' + walkDirMatches + ' times. ')
-                        log.info(subdir + os.sep + filename + " ignored according to local configuration file for " + name + ". ")
-                        if (rootDir + os.sep + misplacedDirName) in subdir:
+                        this.log.debug('Filename: ' + subdir + os.sep + filename + ' matched in filename ' + filenameMatches + ' times, matched in subdir ' + subdirMatches + 'times, and matched in walkDir' + walkDirMatches + ' times. ')
+                        this.log.info(subdir + os.sep + filename + " ignored according to local configuration file for " + name + ". ")
+                        if (this.rootDir + os.sep + this.misplacedDirName) in subdir:
                             # warning the user that the file is in the misplaced folder and is ignored.
-                            log.warning(subdir + os.sep + filename + " is in the misplaced folder. ")
+                            this.log.warning(subdir + os.sep + filename + " is in the misplaced folder. ")
                         return False
                 except re.error:
                     # skip invalid expressions
-                    log.error("Invalid regular expression given: " + ignored)
-    # else: #Creates excessive debug messages, uncomment when needed
-        # log.debug('Local ignoredConfig not found for ' + filebinIgnore) #Creates excessive debug messages, uncomment when needed
+                    this.log.error("Invalid regular expression given: " + ignored)
+    # else: #Creates excessive this.debug messages, uncomment when needed
+        # this.log.debug('Local ignoredConfig not found for ' + filebinIgnore) #Creates excessive this.debug messages, uncomment when needed
     return True
 
 
 # put different versions of the same file together. Files named as TAG_filenameV1.0,
 # TAG_filenameV2.1,TAG_filenameV3.0 will be put into folder called filename
-def groupVersions(rootDir, thisFilebin, groupthreshold):
+def groupVersions():
     global projectNames
-    config.read(rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
-    log.debug('Read config file for groupVersions() function')
-    tag_separator = config.get('GlobalSettings', 'tag_separator')
-    name = thisFilebin.get('name', filebin)
-    log.debug('testing if versions can be bunched for ' + name)
-    if config.has_option(filebin, 'dirName'):
-        dirName = thisFilebin.get('dirName', filebin)
-        log.debug('dirName: ' + dirName)
+    this.config.read(this.rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+    this.log.debug('Read config file for groupVersions() function')
+    tag_separator = this.config.get('GlobalSettings', 'tag_separator')
+    name = this.currentFilebin.get('name', this.filebin)
+    this.log.debug('testing if versions can be bunched for ' + name)
+    if this.config.has_option(this.filebin, 'dirName'):
+        dirName = this.currentFilebin.get('dirName', this.filebin)
+        this.log.debug('dirName: ' + dirName)
         absolutedir = None
-    elif config.has_option(filebin, 'absolutedir'):
+    elif this.config.has_option(this.filebin, 'absolutedir'):
         dirName = None
-        absolutedir = thisFilebin.get('absolutedir', filebin)
-        log.debug('absolutedir: ' + absolutedir)
+        absolutedir = this.currentFilebin.get('absolutedir', this.filebin)
+        this.log.debug('absolutedir: ' + absolutedir)
     else:
-        log.critical('Directory for ' + name + ' is missing.')
+        this.log.critical('Directory for ' + name + ' is missing.')
         sys.exit(missingDirErr)
 
-    if config.has_option(filebin, 'tag'):
-        if thisFilebin.get('tag', filebin) != '':
-            tag = thisFilebin.get('tag', filebin)
+    if this.config.has_option(this.filebin, 'tag'):
+        if this.currentFilebin.get('tag', this.filebin) != '':
+            tag = this.currentFilebin.get('tag', this.filebin)
         else:
             tag = None
-        if config.has_option(filebin, 'tagAlternative'):
-            if thisFilebin.get('tagAlternative') != '':
-                tagAlternative = thisFilebin.get('tagAlternative')
+        if this.config.has_option(this.filebin, 'tagAlternative'):
+            if this.currentFilebin.get('tagAlternative') != '':
+                tagAlternative = this.currentFilebin.get('tagAlternative')
             else:
                 tagAlternative = None
         else:
@@ -254,21 +260,21 @@ def groupVersions(rootDir, thisFilebin, groupthreshold):
             regexForTag = r"^[\S\s]*" + re.escape(tag) + re.escape(tag_separator) + r"([\S\s]*)V\d[\S\s]*$"
         else:
             regexForTagAlt = None
-        log.debug('groupVersions -> regexForTag: ' + regexForTag)
+        this.log.debug('groupVersions -> regexForTag: ' + regexForTag)
         if tagAlternative is not None:
             regexForTagAlt = r"^[\S\s]*" + re.escape(tagAlternative) + re.escape(tag_separator) + r"([\S\s]*)V\d[\S\s]*$"
-            log.debug('groupVersions -> regexForTagAlt: ' + regexForTagAlt)
+            this.log.debug('groupVersions -> regexForTagAlt: ' + regexForTagAlt)
         else:
             regexForTagAlt = None
     else:
         regexForTag = None
         regexForTagAlt = None
 
-    if config.has_option(filebin, 'regex_tag'):
-        if thisFilebin.get('regex_tag') != '':
-            regex_tag = thisFilebin.get('regex_tag')
+    if this.config.has_option(this.filebin, 'regex_tag'):
+        if this.currentFilebin.get('regex_tag') != '':
+            regex_tag = this.currentFilebin.get('regex_tag')
             regex_tag = '^' + regex_tag + r"([\S\s]*)V\d[\S\s]*$"
-            log.debug('groupVersions -> regex_tag: ' + regex_tag)
+            this.log.debug('groupVersions -> regex_tag: ' + regex_tag)
         else:
             regex_tag = None
     else:
@@ -288,19 +294,19 @@ def groupVersions(rootDir, thisFilebin, groupthreshold):
         regex_tag = None
 
     if dirName is not None:
-        walkDir = rootDir + os.sep + dirName
+        walkDir = this.rootDir + os.sep + dirName
     elif absolutedir is not None:
         walkDir = absolutedir
-    log.debug('groupVersions -> Directory set to ' + walkDir)
+    this.log.debug('groupVersions -> Directory set to ' + walkDir)
     if os.path.isdir(walkDir):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
                 filepath = subdir + os.sep + filename
-                if validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
+                if validTarget(name, subdir, filename, walkDir):
                     projName = matchVersionFormat(regexTag, regexTagAlt, regex_tag, filename)
                     if projName is not None:
-                        log.debug('Found potential project: ' + projName + ' with count: ' + str(projectNames.count(projName)) + ' and project threshold met: ' + str(projectNames.count(projName) >= groupthreshold) + ' and subdirectory: ' + subdir)
-                        if (projectNames.count(projName) >= groupthreshold) and (projName not in subdir):  # if there are numerous versions AND it is not in a folder with the project name:
+                        this.log.debug('Found potential project: ' + projName + ' with count: ' + str(projectNames.count(projName)) + ' and project threshold met: ' + str(projectNames.count(projName) >= this.groupthreshold) + ' and subdirectory: ' + subdir)
+                        if (projectNames.count(projName) >= this.groupthreshold) and (projName not in subdir):  # if there are numerous versions AND it is not in a folder with the project name:
 
                             if not os.path.isdir(subdir + os.sep + projName):  # make a directory if it does not exist
                                 os.mkdir(subdir + os.sep + projName)
@@ -321,70 +327,70 @@ def groupVersions(rootDir, thisFilebin, groupthreshold):
                                             if projName == regexTag.match(filename2).group(1):
                                                 matchProject = True
 
-                                    if validTarget(rootDir, name, subdir2, filename2, walkDir, misplacedDirName) and matchProject and (projName not in subdir2):
+                                    if validTarget(name, subdir2, filename2, walkDir) and matchProject and (projName not in subdir2):
                                         duplicateFileWorkaround(subdir2, subdir2 + os.sep + projName, filename2)  # move files into this directory.
-                                        log.debug('groupVersions -> Multiple versions of filename2 found and moved into ' + subdir2 + os.sep + projName)
+                                        this.log.debug('groupVersions -> Multiple versions of filename2 found and moved into ' + subdir2 + os.sep + projName)
 
     else:
-        log.critical('Directory for ' + name + ' not valid.')  # quit if the given directory for the folder to sort is invalid, see topmost if condition.
+        this.log.critical('Directory for ' + name + ' not valid.')  # quit if the given directory for the folder to sort is invalid, see topmost if condition.
         sys.exit(filebinDirErr)
 
 
 # remove misplaced files and move to misplaced folder.
-def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
-    name = thisFilebin.get('name', filebin)
-    log.debug('Removing misplaced files in ' + name)
-    config.read(rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
-    tag_separator = config.get('GlobalSettings', 'tag_separator')
-    if config.has_option(filebin, 'dirName') and config.has_option(filebin, 'absolutedir'):
-        log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
+def removeMisplaced():
+    name = this.currentFilebin.get('name', this.filebin)
+    this.log.debug('Removing misplaced files in ' + name)
+    this.config.read(this.rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+    tag_separator = this.config.get('GlobalSettings', 'tag_separator')
+    if this.config.has_option(this.filebin, 'dirName') and this.config.has_option(this.filebin, 'absolutedir'):
+        this.log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
         sys.exit(filebinDirErr)
-    elif config.has_option(filebin, 'dirName'):
-        dirName = thisFilebin.get('dirName', filebin)
+    elif this.config.has_option(this.filebin, 'dirName'):
+        dirName = this.currentFilebin.get('dirName', this.filebin)
         absolutedir = None
-    elif config.has_option(filebin, 'absolutedir'):
+    elif this.config.has_option(this.filebin, 'absolutedir'):
         dirName = None
-        absolutedir = thisFilebin.get('absolutedir', filebin)
+        absolutedir = this.currentFilebin.get('absolutedir', this.filebin)
     else:
-        log.critical('Directory for ' + name + ' is missing.')
+        this.log.critical('Directory for ' + name + ' is missing.')
         sys.exit(missingDirErr)
-    ignoreMisplaced = config.getboolean(filebin, 'ignoreMisplaced')
-    misplacedDirName = thisFilebin.get('misplacedDirName', "Misplaced")
-    if config.has_option(filebin, 'tag'):
-        if thisFilebin.get('tag', filebin) != '':
-            tag = thisFilebin.get('tag', filebin)
+    ignoreMisplaced = this.config.getboolean(this.filebin, 'ignoreMisplaced')
+    this.misplacedDirName = this.currentFilebin.get('misplacedDirName', "Misplaced")
+    if this.config.has_option(this.filebin, 'tag'):
+        if this.currentFilebin.get('tag', this.filebin) != '':
+            tag = this.currentFilebin.get('tag', this.filebin)
         else:
             tag = None
-        if config.has_option(filebin, 'tagAlternative'):
-            if thisFilebin.get('tagAlternative') != '':
-                tagAlternative = thisFilebin.get('tagAlternative')
+        if this.config.has_option(this.filebin, 'tagAlternative'):
+            if this.currentFilebin.get('tagAlternative') != '':
+                tagAlternative = this.currentFilebin.get('tagAlternative')
             else:
                 tagAlternative = None
         else:
             tagAlternative = None
         if tag is not None:
             regexForTag_F = r"[\S\s]*"+re.escape(tag)+re.escape(tag_separator)+r"[\S\s]*"
-            log.debug(name + ' -> removeMisplaced -> regexForTag_F: ' + regexForTag_F)
+            this.log.debug(name + ' -> removeMisplaced -> regexForTag_F: ' + regexForTag_F)
             regexForTag_B = r"[\S\s]*" + re.escape(tag_separator) + re.escape(tag) + r"[\S\s]*"
-            log.debug(name + ' -> removeMisplaced -> regexForTag_B: ' + regexForTag_B)
+            this.log.debug(name + ' -> removeMisplaced -> regexForTag_B: ' + regexForTag_B)
         else:
             regexForTag_F = None
             regexForTag_B = None
         if tagAlternative is not None:
             regexForTagAlt_F = r"[\S\s]*" + re.escape(tagAlternative) + re.escape(tag_separator) + r"[\S\s]*"
-            log.debug(name + ' -> removeMisplaced -> regexForTagAlt_F: ' + regexForTagAlt_F)
+            this.log.debug(name + ' -> removeMisplaced -> regexForTagAlt_F: ' + regexForTagAlt_F)
             regexForTagAlt_B = r"[\S\s]*" + re.escape(tag_separator) + re.escape(tagAlternative) + r"[\S\s]*"
-            log.debug(name + ' -> removeMisplaced -> regexForTagAlt_B: ' + regexForTagAlt_B)
+            this.log.debug(name + ' -> removeMisplaced -> regexForTagAlt_B: ' + regexForTagAlt_B)
         else:
             regexForTagAlt_F = None
             regexForTagAlt_B = None
     else:
         regexForTag_F = None
         regexForTagAlt_F = None
-    if config.has_option(filebin, 'regex_tag'):
-        if thisFilebin.get('regex_tag') != '':
-            regex_tag = thisFilebin.get('regex_tag')
-            log.debug(name + ' -> removeMisplaced -> regex_tag: ' + regex_tag)
+    if this.config.has_option(this.filebin, 'regex_tag'):
+        if this.currentFilebin.get('regex_tag') != '':
+            regex_tag = this.currentFilebin.get('regex_tag')
+            this.log.debug(name + ' -> removeMisplaced -> regex_tag: ' + regex_tag)
         else:
             regex_tag = None
     else:
@@ -400,21 +406,21 @@ def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
         try:
             regex_tag = re.compile(regex_tag)
         except re.error:
-            log.warning("Invalid regular expression" + regex_tag + " given for " + name + "Ignore file, skipping ...")
-    log.debug(name + ' -> removeMisplaced -> Compiled all regex tags.')
+            this.log.warning("Invalid regular expression" + regex_tag + " given for " + name + "Ignore file, skipping ...")
+    this.log.debug(name + ' -> removeMisplaced -> Compiled all regex tags.')
     if dirName is not None:
-        walkDir = rootDir + os.sep + dirName
+        walkDir = this.rootDir + os.sep + dirName
     elif absolutedir is not None:
         walkDir = absolutedir
-    log.debug(name + ' -> removeMisplaced -> walkDir: ' + walkDir)
-    if not os.path.isdir(rootDir + os.sep + misplacedDirName):
-        os.mkdir(rootDir + os.sep + misplacedDirName)
-        log.debug(name + ' -> removeMisplaced -> Created Misplaced Folder b/c it may be needed later')
+    this.log.debug(name + ' -> removeMisplaced -> walkDir: ' + walkDir)
+    if not os.path.isdir(this.rootDir + os.sep + this.misplacedDirName):
+        os.mkdir(this.rootDir + os.sep + this.misplacedDirName)
+        this.log.debug(name + ' -> removeMisplaced -> Created Misplaced Folder b/c it may be needed later')
     if os.path.isdir(walkDir):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
                 filepath = subdir + os.sep + filename
-                if validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
+                if validTarget(name, subdir, filename, walkDir):
                     try:
                         rTag = regexTag_F.search(filename) or regexTag_B.search(filename)
                     except NameError:
@@ -437,68 +443,68 @@ def removeMisplaced(rootDir, misplacedDirName, thisFilebin):
                         continue
                     else:
                         if ignoreMisplaced:
-                            log.info(filepath + " is misplaced")
+                            this.log.info(filepath + " is misplaced")
                         else:
-                            duplicateFileWorkaround(subdir, rootDir + os.sep + misplacedDirName, filename)
-                            log.info(filepath + " is misplaced and placed into " + misplacedDirName)
+                            duplicateFileWorkaround(subdir, this.rootDir + os.sep + this.misplacedDirName, filename)
+                            this.log.info(filepath + " is misplaced and placed into " + this.misplacedDirName)
     else:
-        log.critical('Directory for ' + name + ' not valid.')
+        this.log.critical('Directory for ' + name + ' not valid.')
         sys.exit(filebinDirErr)
 
 
 # return the misplaced files to the directories they belong in if they have the corresponding tags.
-def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
-    config.read(rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
-    tag_separator = config.get('GlobalSettings', 'tag_separator')
-    name = thisFilebin.get('name', filebin)
-    log.debug('Returning misplaced files for ' + name)
-    if config.has_option(filebin, 'dirName') and config.has_option(filebin, 'absolutedir'):
-        log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
+def returnMisplaced():
+    this.config.read(this.rootDir + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+    tag_separator = this.config.get('GlobalSettings', 'tag_separator')
+    name = this.currentFilebin.get('name', this.filebin)
+    this.log.debug('Returning misplaced files for ' + name)
+    if this.config.has_option(this.filebin, 'dirName') and this.config.has_option(this.filebin, 'absolutedir'):
+        this.log.critical('Two directories given for ' + name + ' Aborting due to possible conflict. Please remove 1 of the 2 directories. ')
         sys.exit(filebinDirErr)
-    elif config.has_option(filebin, 'dirName'):
-        dirName = thisFilebin.get('dirName', filebin)
+    elif this.config.has_option(this.filebin, 'dirName'):
+        dirName = this.currentFilebin.get('dirName', this.filebin)
         absolutedir = None
-    elif config.has_option(filebin, 'absolutedir'):
+    elif this.config.has_option(this.filebin, 'absolutedir'):
         dirName = None
-        absolutedir = thisFilebin.get('absolutedir', filebin)
+        absolutedir = this.currentFilebin.get('absolutedir', this.filebin)
     else:
-        log.critical('Directory for ' + name + ' is missing.')
+        this.log.critical('Directory for ' + name + ' is missing.')
         sys.exit(missingDirErr)
-    ignoreMisplaced = config.getboolean(filebin, 'ignoreMisplaced')
-    if config.has_option(filebin, 'tag'):
-        if thisFilebin.get('tag', filebin) is not None:
-            tag = thisFilebin.get('tag', filebin)
+    ignoreMisplaced = this.config.getboolean(this.filebin, 'ignoreMisplaced')
+    if this.config.has_option(this.filebin, 'tag'):
+        if this.currentFilebin.get('tag', this.filebin) is not None:
+            tag = this.currentFilebin.get('tag', this.filebin)
         else:
             tag = None
-        if config.has_option(filebin, 'tagAlternative'):
-            if thisFilebin.get('tagAlternative') != '':
-                tagAlternative = thisFilebin.get('tagAlternative')
+        if this.config.has_option(this.filebin, 'tagAlternative'):
+            if this.currentFilebin.get('tagAlternative') != '':
+                tagAlternative = this.currentFilebin.get('tagAlternative')
             else:
                 tagAlternative = None
         else:
             tagAlternative = None
         if tag is not None:
             regexForTag_F = r"[\S\s]*" + re.escape(tag) + re.escape(tag_separator) + r"[\S\s]*"
-            log.debug(name + ' -> returnMisplaced -> regexForTag_F: ' + regexForTag_F)
+            this.log.debug(name + ' -> returnMisplaced -> regexForTag_F: ' + regexForTag_F)
             regexForTag_B = r"[\S\s]*" + re.escape(tag_separator) + re.escape(tag) + r"[\S\s]*"
-            log.debug(name + ' -> returnMisplaced -> regexForTag_B: ' + regexForTag_B)
+            this.log.debug(name + ' -> returnMisplaced -> regexForTag_B: ' + regexForTag_B)
         else:
             regexForTag_F = None
         if tagAlternative is not None:
             regexForTagAlt_F = r"[\S\s]*" + re.escape(tagAlternative) + re.escape(tag_separator) + r"[\S\s]*"
-            log.debug(name + ' -> returnMisplaced -> regexForTagAlt_F: ' + regexForTagAlt_F)
+            this.log.debug(name + ' -> returnMisplaced -> regexForTagAlt_F: ' + regexForTagAlt_F)
             regexForTagAlt_B = r"[\S\s]*" + re.escape(tag_separator) + re.escape(tagAlternative) + r"[\S\s]*"
-            log.debug(name + ' -> returnMisplaced -> regexForTagAlt_B: ' + regexForTagAlt_B)
+            this.log.debug(name + ' -> returnMisplaced -> regexForTagAlt_B: ' + regexForTagAlt_B)
         else:
             regexForTagAlt_F = None
     else:
         regexForTag_F = None
         regexForTagAlt_F = None
 
-    if config.has_option(filebin, 'regex_tag'):
-        if thisFilebin.get('regex_tag') != '':
-            regex_tag = thisFilebin.get('regex_tag')
-            log.debug(name + ' -> returnMisplaced -> regex_tag: ' + regex_tag)
+    if this.config.has_option(this.filebin, 'regex_tag'):
+        if this.currentFilebin.get('regex_tag') != '':
+            regex_tag = this.currentFilebin.get('regex_tag')
+            this.log.debug(name + ' -> returnMisplaced -> regex_tag: ' + regex_tag)
         else:
             regex_tag = None
     else:
@@ -514,15 +520,15 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
         try:
             regex_tag = re.compile(regex_tag, re.I)
         except re.error:
-            log.error("Invalid regular expression given for " + name + ", skipping ...")
+            this.log.error("Invalid regular expression given for " + name + ", skipping ...")
 
-    walkDir = rootDir + os.sep + misplacedDirName
-    log.debug(name + ' -> returnMisplaced -> walkDir: ' + walkDir)
+    walkDir = this.rootDir + os.sep + this.misplacedDirName
+    this.log.debug(name + ' -> returnMisplaced -> walkDir: ' + walkDir)
     if os.path.isdir(walkDir):
         for subdir, dirs, files in os.walk(walkDir):
             for filename in files:
                 filepath = subdir + os.sep + filename
-                if validTarget(rootDir, name, subdir, filename, walkDir, misplacedDirName):
+                if validTarget(name, subdir, filename, walkDir):
                     try:
                         rTag = regexTag_F.search(filename) or regexTag_B.search(filename)
                     except NameError:
@@ -543,74 +549,82 @@ def returnMisplaced(rootDir, misplacedDirName, thisFilebin):
                         rTagGiven = False
                     if rTag or rAltTag or rTagGiven:
                         if ignoreMisplaced:
-                            log.info(filepath + " should be returned")
+                            this.log.info(filepath + " should be returned")
                         else:
                             if dirName is not None:
                                 # ignore if duplicate files exist.
-                                duplicateFileWorkaround(subdir, rootDir + os.sep + dirName, filename)
-                                log.info(filepath + " returned")
+                                duplicateFileWorkaround(subdir, this.rootDir + os.sep + dirName, filename)
+                                this.log.info(filepath + " returned")
                             elif absolutedir is not None:
                                 duplicateFileWorkaround(subdir, absolutedir, filename)
-                                log.info(filepath + " returned")
+                                this.log.info(filepath + " returned")
                             else:
-                                log.critical('Directory for ' + name + ' not valid.')
+                                this.log.critical('Directory for ' + name + ' not valid.')
                                 sys.exit(filebinDirErr)
     else:
         log.critical('Directory for ' + name + ' not valid.')
         sys.exit(filebinDirErr)
 
 
-def main():
-    globalIgnored = []
-    globalWarned = []
-
+def parseArgs():
     parser = argparse.ArgumentParser(description='Generates settings for fileSort.py')
     ifCreateLog = parser.add_mutually_exclusive_group(required=False)
     ifCreateLog.add_argument("--logDir", dest='logDir', default='', required=False)
     ifCreateLog.add_argument("--noLog", action='store_true', default=False, required=False)
     verbosityLevel = parser.add_mutually_exclusive_group(required=False)
-    verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0)  # debug
-    verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, debug
+    verbosityLevel.add_argument('--debug', action='store_const',const=2, default=0)  # this.debug
+    verbosityLevel.add_argument('--verbose', '-v', action='count', default=0)  # warning, info, this.debug
     verbosityLevel.add_argument('--quiet', '-q', action='count', default=0)  # critical, error/exception, warning
     parser.add_argument("--rootDir", dest='path', default=os.getcwd(), required=False)
     parser.add_argument("--includeSysFiles", action='store_true', default=False, required=False)
     args = parser.parse_args()
-    logDir = args.logDir
-    verbose = args.verbose
-    quiet = args.quiet
-    path = args.path
-    noLog = args.noLog
-    debug = args.debug
-    includeSysFiles = args.includeSysFiles
-    verbosityLevel = verbose - quiet + debug
-    if not os.path.isdir(path):
-        path = os.getcwd()
-    if not noLog:
-        if logDir == '':
-            logDir = os.getcwd() + os.sep + 'Logs'
-        if not os.path.isdir(logDir):
+    this.logDir = args.logDir
+    this.verbose = args.verbose
+    this.quiet = args.quiet
+    this.path = args.path
+    this.noLog = args.noLog
+    this.debug = args.debug
+    this.includeSysFiles = args.includeSysFiles
+
+
+def inputArgs(logDir, verbose, quiet, noLog, debug, includeSysFiles, path):
+    this.logDir = logDir
+    this.verbose = verbose
+    this.quiet = quiet
+    this.path = path
+    this.noLog = noLog
+    this.debug = debug
+    this.includeSysFiles = includeSysFiles
+
+
+def main():
+    verbosityLevel = this.verbose - this.quiet + this.debug
+    if not os.path.isdir(this.path):
+        this.path = os.getcwd()
+    if not this.noLog:
+        if this.logDir == '':
+            this.logDir = os.getcwd() + os.sep + 'Logs'
+        if not os.path.isdir(this.logDir):
             try:
-                os.mkdir(logDir)
+                os.mkdir(this.logDir)
             except FileNotFoundError:
                 if verbosityLevel != -3:
-                    print('ERROR: Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--logDir" or pass "--noLog" option. ')
+                    print('ERROR: Unable to use "Logs" directory (defaults under working directory). Consider specifying a directory for log file with "--this.logDir" or pass "--this.noLog" option. ')
                 sys.exit(cantCreateErr)
 
-    log = logging.getLogger('FileSorter')
-    log.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    if not noLog:
-        fh = logging.FileHandler(logDir + os.sep + 'fileSorter.log')
+    if not this.noLog:
+        fh = logging.FileHandler(this.logDir + os.sep + 'fileSorter.log')
         fh.setLevel(logging.INFO)
         fh.setFormatter(formatter)
-        log.addHandler(fh)
+        this.log.addHandler(fh)
 
-    if not noLog:
-        fhW = logging.FileHandler(logDir + os.sep + 'fileSorterwarning.log')
+    if not this.noLog:
+        fhW = logging.FileHandler(this.logDir + os.sep + 'fileSorterwarning.log')
         fhW.setLevel(logging.WARNING)
         fhW.setFormatter(formatter)
-        log.addHandler(fhW)
+        this.log.addHandler(fhW)
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(formatter)
@@ -624,100 +638,100 @@ def main():
         elif verbosityLevel == 1:
             ch.setLevel(logging.INFO)
         elif verbosityLevel == 2:
-            ch.setLevel(logging.DEBUG)
+            ch.setLevel(logging.this.debug)
         else:
-            print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --verbose, --quiet, --debug")
+            print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --this.verbose, --this.quiet, --this.debug")
             sys.exit(invalidSettingErr)
-        log.addHandler(ch)
+        this.log.addHandler(ch)
 
-    log.debug('logDir = '+str(logDir)+', verbose = '+str(verbose)+', quiet = '+str(quiet)+', path = '+str(path))
+    this.log.debug('this.logDir = '+str(this.logDir)+', this.verbose = '+str(this.verbose)+', this.quiet = '+str(this.quiet)+', this.path = '+str(this.path))
 
-    isUserAdmin=isUserAdmin()
-    if isUserAdmin:
-        log.warning("Please do not run this script as root if possible to prevent accidental breaking of system components. \n Please ensure that the configuration files are all protected with the neccessary permissions to prevent abuse. ")
+    if isUserAdmin():
+        this.log.warning("Please do not run this script as root if possible to prevent accidental breaking of system components. \n Please ensure that the configuration files are all protected with the neccessary permissions to prevent abuse. ")
 
     # Read Config
-    config = configparser.ConfigParser()
-    if not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
-        log.critical("Configuration files not found at "+path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
+    this.config = configparser.ConfigParser()
+    if not os.path.isfile(this.path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config') or not os.path.isfile(this.path + os.sep + 'fileSortConfiguration' + os.sep + 'globalIgnored.config'):
+        this.log.critical("Configuration files not found at "+this.path + os.sep + 'fileSortConfiguration. Expected fileSort.config and globalIgnored.config')
         sys.exit(configNotFound)
 
     try:
-        config.read(path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
+        this.config.read(this.path + os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config')
     except PermissionError:
-        log.critical("Unable to open configuration file because of permissions error")
+        this.log.critical("Unable to open configuration file because of permissions error")
         sys.exit(permissionsErr)
 
-    if ('GlobalSettings' in config):
-        GlobalSettings = config['GlobalSettings']
-        rootDir = GlobalSettings.get('rootDir')
-        misplacedDirName = GlobalSettings.get('misplacedDirName', "Misplaced")
-        rootStatus = config.getboolean('GlobalSettings', 'rootStatus')
-        removeMisplacedDir = config.getboolean('GlobalSettings', 'removeMisplacedDir')
-        groupversions = config.getboolean('GlobalSettings', 'groupversions')
-        groupthreshold = config.getint('GlobalSettings', 'groupthreshold')
+    if ('GlobalSettings' in this.config):
+        GlobalSettings = this.config['GlobalSettings']
+        this.rootDir = GlobalSettings.get('rootDir')
+        this.misplacedDirName = GlobalSettings.get('misplacedDirName', "Misplaced")
+        rootStatus = this.config.getboolean('GlobalSettings', 'rootStatus')
+        removeMisplacedDir = this.config.getboolean('GlobalSettings', 'removeMisplacedDir')
+        groupversions = this.config.getboolean('GlobalSettings', 'groupversions')
+        this.groupthreshold = this.config.getint('GlobalSettings', 'groupthreshold')
 
-        log.debug('rootDir = ' + str(rootDir) + ', misplacedDirName = ' + str(misplacedDirName) + ', rootStatus = ' + str(rootStatus) + ', removeMisplacedDir = ' + str(removeMisplacedDir) + ', groupversions = ' + str(groupversions) + ', groupthreshold = ' + str(groupthreshold))
+        this.log.debug('rootDir = ' + str(this.rootDir) + ', misplacedDirName = ' + str(this.misplacedDirName) + ', rootStatus = ' + str(rootStatus) + ', removeMisplacedDir = ' + str(removeMisplacedDir) + ', groupversions = ' + str(groupversions) + ', groupthreshold = ' + str(this.groupthreshold))
         if not rootStatus:
-            log.warning("fileSort.py disabled in configfile")
+            this.log.warning("fileSort.py disabled in configfile")
             sys.exit(0)
 
-        if os.path.isdir(rootDir):
-            rootDir = rootDir
+        if os.path.isdir(this.rootDir):
+            this.rootDir = this.rootDir
         else:
-            log.critical("Invalid root directory given.")
+            this.log.critical("Invalid root directory given." + this.rootDir)
             sys.exit(rootDirErr)
     else:
-        log.critical("Global Configuration not found in fileSort.config configuration file. ")
+        this.log.critical("Global Configuration not found in fileSort.config configuration file. ")
         sys.exit(invalidSettingErr)
 
-    existMisplaced = os.path.isdir(rootDir + os.sep + misplacedDirName)
-    Sections = config.sections()
+    existMisplaced = os.path.isdir(this.rootDir + os.sep + this.misplacedDirName)
+    Sections = this.config.sections()
     filebinCount = len(Sections)
 
     for i in range(1, filebinCount+1):
-        filebin = "Bin" + str(i)
-        if config.has_section(filebin):
-            thisFilebin = config[filebin]
-            active = config.getboolean(filebin, 'active')
+        this.filebin = "Bin" + str(i)
+        if this.config.has_section(this.filebin):
+            this.currentFilebin = this.config[this.filebin]
+            active = this.config.getboolean(this.filebin, 'active')
             if active:
-                removeMisplaced(rootDir, misplacedDirName, thisFilebin)
+                removeMisplaced()
             else:
-                log.info(thisFilebin.get('name', filebin) + " skipped.")
+                this.log.info(this.currentFilebin.get('name', this.filebin) + " skipped.")
 
     for i in range(1, filebinCount+1):
-        log.debug("Testing if Bin "+str(i)+" found.")
-        filebin = "Bin" + str(i)
-        if not config.has_section(filebin):
-            log.debug("Bin "+str(i)+" not found.")
+        this.this.log.debug("Testing if Bin "+str(i)+" found.")
+        this.filebin = "Bin" + str(i)
+        if not this.config.has_section(this.filebin):
+            this.log.debug("Bin "+str(i)+" not found.")
         else:
-            log.debug("Bin "+str(i)+" found.")
-            thisFilebin = config[filebin]
-            active = config.getboolean(filebin, 'active')
+            this.log.debug("Bin "+str(i)+" found.")
+            this.currentFilebin = this.config[this.filebin]
+            active = this.config.getboolean(this.filebin, 'active')
             if active:
-                returnMisplaced(rootDir, misplacedDirName, thisFilebin)
+                returnMisplaced()
                 if groupversions:
-                    groupVersions(rootDir, thisFilebin, groupthreshold)
+                    groupVersions()
             else:
-                log.info(thisFilebin.get('name',filebin)+" skipped.")
+                this.log.info(this.currentFilebin.get('name',this.filebin)+" skipped.")
 
-    misplacedFiles = os.listdir(rootDir + os.sep + misplacedDirName)
-    if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):
+    misplacedFiles = os.listdir(this.rootDir + os.sep + this.misplacedDirName)
+    if os.path.exists(this.rootDir + os.sep + this.misplacedDirName + os.sep + ".DS_Store"):
         misplacedFiles.remove('.DS_Store')
     if (not misplacedFiles) and removeMisplacedDir and existMisplaced:
-        log.info("Removed " + misplacedDirName + " because uneeded")
-        if os.path.exists(rootDir + os.sep + misplacedDirNameos.sep+".DS_Store"):
-            os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
-        os.rmdir(rootDir + os.sep + misplacedDirName)
+        this.log.info("Removed " + this.misplacedDirName + " because uneeded")
+        if os.path.exists(this.rootDir + os.sep + this.misplacedDirNameos.sep+".DS_Store"):
+            os.remove(this.rootDir + os.sep + this.misplacedDirName + os.sep + ".DS_Store")
+        os.rmdir(this.rootDir + os.sep + this.misplacedDirName)
     elif (not misplacedFiles) and removeMisplacedDir and not existMisplaced:
-        if os.path.exists(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store"):
-            os.remove(rootDir + os.sep + misplacedDirName + os.sep + ".DS_Store")
-        os.rmdir(rootDir + os.sep + misplacedDirName)
+        if os.path.exists(this.rootDir + os.sep + this.misplacedDirName + os.sep + ".DS_Store"):
+            os.remove(this.rootDir + os.sep + this.misplacedDirName + os.sep + ".DS_Store")
+        os.rmdir(this.rootDir + os.sep + this.misplacedDirName)
     elif misplacedFiles:
-        log.warning("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended filebin for these files. ")
+        this.log.warning("Files have been misplaced. Please return them manually. The program is unable to detirmine the intended filebin for these files. ")
     else:
-        log.info("Keeping "+misplacedDirName+" folder empty.")
-    log.info("Finished")
+        this.log.info("Keeping "+this.misplacedDirName+" folder empty.")
+
 
 if __name__ == '__main__':
+    parseArgs()
     main()
