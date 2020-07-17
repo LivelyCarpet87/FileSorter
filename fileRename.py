@@ -116,8 +116,8 @@ def renamingTag():
 
 def undoRenamingTag():
     print('Please input the tag to be removed from the filenames. \
-    For example, "APPL" will cause the file named "APPL_myfile.txt" to be renamed into "myfile.txt" \
-    The program will exit this mode if no files with the tag are found. ')
+For example, "APPL" will cause the file named "APPL_myfile.txt" to be renamed into "myfile.txt" \
+The program will exit this mode if no files with the tag are found. ')
     print("To go back, enter" + '"!back"')
     while True:
         tag = input("Remove TAG: ")
