@@ -18,7 +18,7 @@ missing module named 'multiprocessing.forking' - imported by /usr/local/lib/pyth
 missing module named 'org.python' - imported by copy (optional), xml.sax (delayed, conditional)
 missing module named _frozen_importlib_external - imported by importlib._bootstrap (delayed), importlib (optional), importlib.abc (optional), zipimport (top-level)
 excluded module named _frozen_importlib - imported by importlib (optional), importlib.abc (optional), zipimport (top-level)
-missing module named nt - imported by os (delayed, conditional, optional), ntpath (optional), shutil (conditional), pathlib (conditional), ctypes (delayed, conditional)
+missing module named nt - imported by shutil (conditional), ntpath (optional), pathlib (conditional), ctypes (delayed, conditional), os (delayed, conditional, optional)
 missing module named winreg - imported by platform (delayed, optional), mimetypes (optional), urllib.request (delayed, conditional, optional)
 missing module named msvcrt - imported by subprocess (optional), getpass (optional), test.support (delayed, conditional, optional), multiprocessing.spawn (delayed, conditional), multiprocessing.popen_spawn_win32 (top-level), asyncio.windows_events (top-level), asyncio.windows_utils (top-level)
 missing module named 'java.lang' - imported by platform (delayed, optional), xml.sax._exceptions (conditional)
