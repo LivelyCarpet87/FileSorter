@@ -86,19 +86,29 @@ integer number of minutes. Please note that this app must be open for it to run.
 
 
 def removeScheduledSorter():
+    counter = 1
+    for sorter in jobs:
+        print(counter+": "+sorter.rootDir)
+        counter = counter + 1
+    print(counter + ": Back")
+    while True:
+        userInput = input("Choice: ")
+        try:
+            userInput = int(userInput)
+        except ValueError:
+            pass
+        if userInput in range(1,counter-1+1):
+            break
+        elif userInput == counter:
+            return None
+        else:
+            print("Invalid input. Please enter a corresponding integer. ")
     print("Are you certain you wish to NOT sort this directory?")
     if input("Press Y to continue: ") not in ['y','Y']:
-        return None
-    if not os.path.isfile(os.getcwd()+ os.sep + 'fileSortConfiguration' + os.sep + 'fileSort.config'):
-        print("The directory you gave is not set up. Configuration file not found.")
-        input("Press enter to continue: ")
-        return None
-    for sorter in jobs:
-        if sorter.rootDir == os.getcwd():
-            kill(sorter)
-            time.sleep(10)
-            jobs.remove(sorter)
-    input("Press enter to continue: ")
+        kill(jobs[counter-1])
+        time.sleep(10)
+        jobs.remove(sorter)
+    input("Press enter to return to main menu: ")
 
 
 def scheduler():
