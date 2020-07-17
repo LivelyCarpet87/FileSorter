@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/home/livelycarpet87/FileSorter'],
+             pathex=['/Users/livelycarpet87/GitHub_Projects/Utilities/FileSorter'],
              binaries=[],
              datas=[],
              hiddenimports=[],
