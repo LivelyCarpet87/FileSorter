@@ -1,0 +1,3 @@
+([('main',
+   '/Users/livelycarpet87/GitHub_Projects/Utilities/FileSorter/dist/main',
+   'EXECUTABLE')],)
