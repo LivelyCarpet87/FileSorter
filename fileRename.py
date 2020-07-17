@@ -94,8 +94,8 @@ def renamingOptions():
 
 def renamingTag():
     print('Please input the tag to be included into the filenames. \
-    For example, "APPL" will cause the file named "myfile.txt" \
-    to be renamed into "APPL_myfile.txt" ')
+For example, "APPL" will cause the file named "myfile.txt" \
+to be renamed into "APPL_myfile.txt" ')
     print("To go back, enter" + '"!back"')
     while True:
         tag = input("TAG: ")
