@@ -88,9 +88,9 @@ integer number of minutes. Please note that this app must be open for it to run.
 def removeScheduledSorter():
     counter = 1
     for sorter in jobs:
-        print(counter+": "+sorter.rootDir)
+        print(str(counter)+": "+str(sorter.rootDir))
         counter = counter + 1
-    print(counter + ": Back")
+    print(str(counter) + ": Back")
     while True:
         userInput = input("Choice: ")
         try:
@@ -105,7 +105,8 @@ def removeScheduledSorter():
             print("Invalid input. Please enter a corresponding integer. ")
     print("Are you certain you wish to NOT sort this directory?")
     if input("Press Y to continue: ") not in ['y','Y']:
-        kill(jobs[counter-1])
+        sorter = jobs[userInput-1]
+        kill(sorter)
         time.sleep(10)
         jobs.remove(sorter)
     input("Press enter to return to main menu: ")
