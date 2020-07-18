@@ -61,6 +61,9 @@ def changeWorkingDir():
             print(name)
     while True:
         newDir = input("Change to: ")
+        newDir = newDir.strip()
+        newDir = re.sub(r"'|&|\^|\$", "", newDir)
+        newDir = re.sub(r'"', "", newDir)
         if os.path.isdir(newDir):
             break
         elif newDir == "!back":
