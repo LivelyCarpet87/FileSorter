@@ -272,9 +272,16 @@ def killJobs():
 if __name__ == '__main__':
     try:
         loadJobs()
-        while True:
+        if os.name =='posix':
             os.system('clear')
+        else:
+            os.system('cls')
+        while True:
             main()
+            if os.name =='posix':
+                os.system('clear')
+            else:
+                os.system('cls')
     except KeyboardInterrupt:
         saveJobs()
         killJobs()
