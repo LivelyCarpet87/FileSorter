@@ -179,7 +179,7 @@ def renameFolderAndSub():
             if os.path.isfile(nameFull) and not os.path.isfile(path + os.sep + tag + name) and tag not in name and name[0] != '.':
                 if iterateThrough:
                     while True:
-                        choice = input("Rename " + str(nameFull) +" > ")
+                        choice = input("Rename " + str(nameFull) +" y/n > ")
                         if type(choice) == str:
                             if choice in ["Y","y","Yes","yes","YES"]:
                                 os.rename(path + os.sep + name, path + os.sep + tag + name)
@@ -215,7 +215,7 @@ def undoRenameFolder():
             if os.path.isfile('.' + os.sep + name) and not os.path.isfile('.' + os.sep + newName) and tag not in newName and name[0] != '.':
                 if iterateThrough:
                     while True:
-                        choice = input("Rename " + str(name) +" > ")
+                        choice = input("Undo rename " + str(name) + "to" + str(newName) + " y/n > ")
                         if type(choice) == str:
                             if choice in ["Y","y","Yes","yes","YES"]:
                                 os.rename('.' + os.sep + name, '.' + os.sep + newName)
@@ -246,7 +246,7 @@ def undoRenameFolderAndSub():
                 if os.path.isfile(nameFull) and not os.path.isfile(path + os.sep + newName) and tag not in newName and name[0] != '.':
                     if iterateThrough:
                         while True:
-                            choice = input("Rename " + str(nameFull) + " to " + newName +"? > ")
+                            choice = input("Rename " + str(nameFull) + " to " + newName +"? y/n > ")
                             if type(choice) == str:
                                 if choice in ["Y","y","Yes","yes","YES"]:
                                     os.rename(path + os.sep + name, path + os.sep + newName)
