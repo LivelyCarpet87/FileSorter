@@ -54,9 +54,9 @@ Here this guide really diverges:
 # Common Errors
 ## macOS
 1. User can't find the installed app:
-	Please verify that you have installed the application version and not the CLI version. The CLI version has "CLI" in its name. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues). 
+	Please verify that you have installed the application version and not the CLI version. The CLI version has "CLI" in its name. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues/new). 
 2. Command not found:
-	Please make sure you installed the CLI version and not the application version. Also, please make sure your `$PATH` vairable contains `/usr/local/bin`. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues).
+	Please make sure you installed the CLI version and not the application version. Also, please make sure your `$PATH` vairable contains `/usr/local/bin`. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues/new).
 
 # Issues?
 
