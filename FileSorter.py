@@ -638,7 +638,7 @@ def main():
         elif verbosityLevel == 1:
             ch.setLevel(logging.INFO)
         elif verbosityLevel == 2:
-            ch.setLevel(logging.this.debug)
+            ch.setLevel(logging.DEBUG)
         else:
             print("ERROR: Invalid verbosity level setting given. Use max -vv or -qqq, or --this.verbose, --this.quiet, --this.debug")
             sys.exit(invalidSettingErr)
