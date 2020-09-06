@@ -1,4 +1,4 @@
-# Guide For Absolute Beginners
+# Guide For Beginners
 
 ## Terminology
 

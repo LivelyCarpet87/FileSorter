@@ -46,17 +46,17 @@ Python3: To install python3 on MacOS using Homebrew, run `brew install python3`
 
 Here this guide really diverges:
 
-1. [Guide for absolute beginners]()
-2. [Guide for beginners]() (User can: copy, paste, and modify terminal commands when guided)
-3. [Guide for budding programmers]() (User can: understand working directories and use basic terminal commands)
-4. [Guide for programmers]() (User can: work with configuration files, command line arguments, and advanced commands)
+1. [Guide for absolute beginners](https://github.com/LivelyCarpet87/FileSorter/blob/master/AbsoluteBeginnerGuide.md)
+2. [Guide for beginners](https://github.com/LivelyCarpet87/FileSorter/blob/master/BeginnersGuide.md) (User can: copy, paste, and modify terminal commands when guided)
+3. [Guide for budding programmers](https://github.com/LivelyCarpet87/FileSorter/blob/master/BeginnersGuide.md) (User can: understand working directories and use basic terminal commands)
+4. [Guide for programmers](https://github.com/LivelyCarpet87/FileSorter/blob/master/AdvancedUsage.md) (User can: work with configuration files, command line arguments, and advanced commands)
 
 # Common Errors
 ## macOS
 1. User can't find the installed app:
-	Please verify that you have installed the application version and not the CLI version. The CLI version has "CLI" in its name. If this does not solve your issue, please open an new issue [here](). 
+	Please verify that you have installed the application version and not the CLI version. The CLI version has "CLI" in its name. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues/new). 
 2. Command not found:
-	Please make sure you installed the CLI version and not the application version. Also, please make sure your `$PATH` vairable contains `/usr/local/bin`. If this does not solve your issue, please open an new issue [here]().
+	Please make sure you installed the CLI version and not the application version. Also, please make sure your `$PATH` vairable contains `/usr/local/bin`. If this does not solve your issue, please open an new issue [here](https://github.com/LivelyCarpet87/FileSorter/issues/new).
 
 # Issues?
 
@@ -65,6 +65,8 @@ If some function does not work as expected, or if you have any questions, feel f
 # To-Do
 
 - [x] Add an interactive config setup script
+
+- [x] Add more utility scripts
 
 - [x] Add a script to automatically rename files
 
