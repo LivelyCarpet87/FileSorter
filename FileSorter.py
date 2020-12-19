@@ -134,6 +134,7 @@ def duplicateFileWorkaround(currentDir, targetDir, filename):
             this.log.debug(targetDir + os.sep + newFilename + ' already exists. Trying again. ')
         elif attemptCounter > 11:
             this.log.error('Too many duplicates of ' + targetDir + os.sep + filename + ' found. Possible error. Program ignoring this file as a failsafe.')
+            break
         else:
             break
     os.rename(currentDir + os.sep + filename, targetDir + os.sep + newFilename)
@@ -209,7 +210,7 @@ def validTarget(name, subdir, filename, walkDir):
                     walkDirMatches = len(re.findall(ignoreCondition, walkDir))
                     if subdirMatches > walkDirMatches:
                         # notify user that file has been ignored.
-                        this.log.debug('Filename: ' + subdir + os.sep + filename + ' matched in filename ' + filenameMatches + ' times, matched in subdir ' + subdirMatches + 'times, and matched in walkDir' + walkDirMatches + ' times. ')
+                        this.log.debug('Filename: ' + subdir + os.sep + filename + ' matched in filename ' + str(filenameMatches) + ' times, matched in subdir ' + str(subdirMatches) + 'times, and matched in walkDir' + str(walkDirMatches) + ' times. ')
                         this.log.info(subdir + os.sep + filename + " ignored according to local configuration file for " + name + ". ")
                         if (this.rootDir + os.sep + this.misplacedDirName) in subdir:
                             # warning the user that the file is in the misplaced folder and is ignored.
@@ -281,15 +282,15 @@ def groupVersions():
         regex_tag = None
 
     if regexForTag is not None:
-        regexTag = re.compile(regexForTag+'$', re.I)
+        regexTag = re.compile(regexForTag + '$', re.I)
     else:
         regexTag = None
     if regexForTagAlt is not None:
-        regexTagAlt = re.compile(regexForTagAlt+'$', re.I)
+        regexTagAlt = re.compile(regexForTagAlt + '$', re.I)
     else:
         regexTagAlt = None
     if regex_tag is not None:
-        regex_tag = re.compile('(' + regex_tag + ')' + r"V\d[\S\s]*" + '$')
+        regex_tag = re.compile('(' + regex_tag + ')' + r"V\d[\S\s]+" + '$', re.I)
     else:
         regex_tag = None
 
