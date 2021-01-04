@@ -258,12 +258,12 @@ def groupVersions():
         else:
             tagAlternative = ""
         if tag is not None:
-            regexForTag = r"^[\S\s]*" + re.escape(tag) + re.escape(tag_separator) + r"([\S\s]*)V\d[\S\s]*$"
+            regexForTag = r"^[\S\s]*" + re.escape(tag) + re.escape(tag_separator) + r"([\S\s]*?)_?V\d[\S\s]*$"
         else:
             regexForTagAlt = None
         this.log.debug('groupVersions -> regexForTag: ' + regexForTag)
         if tagAlternative is not None:
-            regexForTagAlt = r"^[\S\s]*" + re.escape(tagAlternative) + re.escape(tag_separator) + r"([\S\s]*)V\d[\S\s]*$"
+            regexForTagAlt = r"^[\S\s]*" + re.escape(tagAlternative) + re.escape(tag_separator) + r"([\S\s]*?)_?V\d[\S\s]*$"
             this.log.debug('groupVersions -> regexForTagAlt: ' + regexForTagAlt)
         else:
             regexForTagAlt = None
@@ -274,7 +274,7 @@ def groupVersions():
     if this.config.has_option(this.filebin, 'regex_tag'):
         if this.currentFilebin.get('regex_tag') != '':
             regex_tag = this.currentFilebin.get('regex_tag')
-            regex_tag = '^' + regex_tag + r"([\S\s]*)V\d[\S\s]*$"
+            regex_tag = '^' + regex_tag + r"([\S\s]*?)_?V\d[\S\s]*$"
             this.log.debug('groupVersions -> regex_tag: ' + regex_tag)
         else:
             regex_tag = None
