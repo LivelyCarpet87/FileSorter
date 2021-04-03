@@ -48,11 +48,10 @@ def isUserAdmin():
     try:
         return os.getuid() == 0
     except AttributeError:
-        pass
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin() == 1
-    except AttributeError:
-        raise AdminStateUnknownError
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin() == 1
+        except AttributeError:
+            raise AdminStateUnknownError
 
 
 def matchVersionFormat(regexTag, regexTagAlt, regex_tag, filename):
