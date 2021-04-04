@@ -315,15 +315,15 @@ def groupVersions():
                                     filepath2 = subdir2 + os.sep + filename2
                                     matchProject = False
                                     if regexTag is not None:
-                                        if re.search(regexTag, filename2):
+                                        if re.search(regexTag, filename2) is not None and regexTag.match(filename2) is not None:
                                             if projName == regexTag.match(filename2).group(1):
                                                 matchProject = True
                                     if regexTagAlt is not None:
-                                        if re.search(regexTagAlt, filename2):
+                                        if re.search(regexTagAlt, filename2) is not None and regexTag.match(filename2) is not None:
                                             if projName == regexTag.match(filename2).group(1):
                                                 matchProject = True
                                     if regex_tag is not None:
-                                        if re.search(regex_tag, filename2):
+                                        if re.search(regex_tag, filename2) is not None and regexTag.match(filename2) is not None:
                                             if projName == regexTag.match(filename2).group(1):
                                                 matchProject = True
 
