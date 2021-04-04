@@ -663,7 +663,7 @@ def main():
 
     if ('GlobalSettings' in this.config):
         GlobalSettings = this.config['GlobalSettings']
-        this.rootDir = os.path if os.path else GlobalSettings.get('rootDir')
+        this.rootDir = this.path if this.path is not None else GlobalSettings.get('rootDir')
         this.misplacedDirName = GlobalSettings.get('misplacedDirName', "Misplaced")
         rootStatus = this.config.getboolean('GlobalSettings', 'rootStatus')
         removeMisplacedDir = this.config.getboolean('GlobalSettings', 'removeMisplacedDir')
