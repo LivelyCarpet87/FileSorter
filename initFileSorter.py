@@ -215,7 +215,7 @@ Enter a new regex tag or enter nothing to disable this feature. Disable this if 
                 tag = userInput
                 del userInput
             config.set(binName,"regex_tag",tag)
-            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
+            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaced folder?')
             config.set(binName,"ignoreMisplaced","OFF")
             if this.genBinIgnored:
                 f = open("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config", "w")
@@ -312,7 +312,7 @@ Enter a new regex tag or enter nothing to disable this feature. Disable this if 
                 tag = userInput
                 del userInput
             config.set(binName,"regex_tag",tag)
-            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
+            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaced folder?')
             config.set(binName,"ignoreMisplaced","OFF")
             if this.genBinIgnored:
                 f = open("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config", "w")
@@ -376,7 +376,7 @@ def main():
             config.set(binName,"tagAlternative",name[0:4])
             config.set(binName, '# Alternative regular expression tag')
             config.set(binName,"regex_tag",'')
-            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
+            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaced folder?')
             config.set(binName,"ignoreMisplaced","OFF")
             if this.genBinIgnored:
                 f = open("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config", "w")
@@ -400,7 +400,7 @@ def main():
             config.set(binName,"tagAlternative",'')
             config.set(binName, '# Alternative regular expression tag')
             config.set(binName,"regex_tag",'')
-            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaved folder?')
+            config.set(binName, '# Ignore misplaced files belonging to this bin in this bin or misplaced folder?')
             config.set(binName,"ignoreMisplaced","OFF")
             if this.genBinIgnored:
                 if not os.path.isfile("."+os.sep+"fileSortConfiguration"+os.sep+name+"Ignored.config"):
