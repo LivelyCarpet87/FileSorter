@@ -417,36 +417,52 @@ def removeMisplaced():
         os.mkdir(this.rootDir + os.sep + this.misplacedDirName)
         this.log.debug(name + ' -> removeMisplaced -> Created Misplaced Folder b/c it may be needed later')
     if os.path.isdir(walkDir):
-        for subdir, dirs, files in os.walk(walkDir):
-            for filename in files:
-                filepath = subdir + os.sep + filename
-                if validTarget(name, subdir, filename, walkDir):
-                    try:
-                        rTag = regexTag_F.search(filename) or regexTag_B.search(filename)
-                    except NameError:
-                        rTag = False
-                    except AttributeError:
-                        rTag = False
-                    try:
-                        rAltTag = regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)
-                    except NameError:
-                        rAltTag = False
-                    except AttributeError:
-                        rAltTag = False
-                    try:
-                        rTagGiven = regex_tag.search(filename)
-                    except NameError:
-                        rTagGiven = False
-                    except AttributeError:
-                        rTagGiven = False
-                    if rTag or rAltTag or rTagGiven:
-                        continue
+        files = []
+        toParse = [walkDir]
+        while len(toParse) > 0:
+            scanPath = toParse[0]
+            entries = os.scandir(scanPath)
+            toParse.pop(0)
+            for entry in entries:
+                if entry.name == ".git":
+                    skipDir = True
+                else:
+                    skipDir = False
+            if not skipDir:
+                for entry in entries:
+                    if not entry.name.startswith('.') and entry.is_file():
+                        files.append( (scanPath,entry.name) )
+                    elif  not entry.name.startswith('.') and entry.is_dir():
+                        toParse.append(entry.path)
+        for subdir, filename in files:
+            filepath = subdir + os.sep + filename
+            if validTarget(name, subdir, filename, walkDir):
+                try:
+                    rTag = regexTag_F.search(filename) or regexTag_B.search(filename)
+                except NameError:
+                    rTag = False
+                except AttributeError:
+                    rTag = False
+                try:
+                    rAltTag = regexTagAlt_F.search(filename) or regexTagAlt_B.search(filename)
+                except NameError:
+                    rAltTag = False
+                except AttributeError:
+                    rAltTag = False
+                try:
+                    rTagGiven = regex_tag.search(filename)
+                except NameError:
+                    rTagGiven = False
+                except AttributeError:
+                    rTagGiven = False
+                if rTag or rAltTag or rTagGiven:
+                    continue
+                else:
+                    if ignoreMisplaced:
+                        this.log.info(filepath + " is misplaced")
                     else:
-                        if ignoreMisplaced:
-                            this.log.info(filepath + " is misplaced")
-                        else:
-                            duplicateFileWorkaround(subdir, this.rootDir + os.sep + this.misplacedDirName, filename)
-                            this.log.info(filepath + " is misplaced and placed into " + this.misplacedDirName)
+                        duplicateFileWorkaround(subdir, this.rootDir + os.sep + this.misplacedDirName, filename)
+                        this.log.info(filepath + " is misplaced and placed into " + this.misplacedDirName)
     else:
         this.log.critical('Directory for ' + name + ' not valid.')
         sys.exit(filebinDirErr)
